@@ -6,6 +6,10 @@
   "scripts": {
     "import": "node src/import_xlsx.js",
     "verify": "node tests/verify.js",
+    "audit": "node tests/full_audit.js",
+    "test:overwrite": "node tests/overwrite_guard.js",
+    "test": "npm run verify && npm run audit && npm run test:overwrite",
+    "analyze": "node src/analyze_market.js",
     "poc": "node sandbox/test_xlsx.js"
   },
   "dependencies": {

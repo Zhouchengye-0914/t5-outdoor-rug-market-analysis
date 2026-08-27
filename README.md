@@ -54,6 +54,13 @@ npm run import
 
 # 4. 验证数据完整性
 npm run verify
+
+# 5. 全量逐 cell 审计 + 覆盖保护
+npm run audit
+npm run test:overwrite
+
+# 6. 生成优化版结构化数据、Markdown 和独立 HTML
+npm run analyze
 ```
 
 ## 4. DB Schema 概览
@@ -63,6 +70,7 @@ npm run verify
 - 月度明细表: `monthly_<YYYYMM>` (例如 `monthly_202206`, `monthly_202602`)
 - TOP 销量表: `top_sales_volume` / `top_sales_volume_ratio` / `top_total_sales` / `top_avg_price`
 - 元数据表: `meta` (记录每次导入)
+- 工作表目录: `sheet_catalog`（记录顺序、可见性、有效区域、分类、目标表、行数和跳过原因）
 
 ### 4.2 通用列
 

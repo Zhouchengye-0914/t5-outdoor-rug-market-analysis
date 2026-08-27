@@ -126,15 +126,15 @@ Phase 1/2/3 已完成；Round 3 复核发现的待修复项如下。
 - [x] Task R3.2: 修正文档中的“55 张业务表 + 1 张空表”表述
   - 结果: 有效业务表应为 54 张；55 是工作簿内部登记总数，`Sheet6` 只是隐藏遗留表
 
-- [ ] Task R3.3: 恢复并运行 `tests/full_audit.js`
+- [x] Task R3.3: 恢复并运行 `tests/full_audit.js`
   - 原因: TASKS/README/REVIEWS 声称存在全量逐 cell 审计，但当前文件缺失
   - 验收: 54 张有效业务表逐行逐列比对，输出实际 checked cells 与 mismatch 数
 
-- [ ] Task R3.4: 修复 `IMPORT_OVERWRITE=false` 保护逻辑
+- [x] Task R3.4: 修复 `IMPORT_OVERWRITE=false` 保护逻辑
   - 现状: 主 DB 虽不删除，但导入流程仍会 `DROP TABLE IF EXISTS`，会覆盖原表
   - 验收: 目标 DB 存在且配置为 false 时非零退出，DB 哈希不变
 
-- [ ] Task R3.5: 改为空表内容判断并记录工作表可见性
+- [x] Task R3.5: 改为空表内容判断并记录工作表可见性
   - 现状: `classifySheet` 仅把固定名称 `Sheet6` 视为空表，且 meta 不记录可见/隐藏口径
   - 验收: 依据 `!ref` 判断无有效区域；验证输出明确显示 23 可见、32 隐藏、54 有效导入、1 跳过
 
@@ -143,13 +143,31 @@ Phase 1/2/3 已完成；Round 3 复核发现的待修复项如下。
   - 补充: 发现 70,989 个源 Excel 数值在 SQLite 中以 TEXT 存储；数值等值但存储类型发生变化
   - 限制: 本次通过一次性只读核验命令完成，仍需 R3.3 恢复可复跑脚本
 
-- [ ] Task R3.7: 落实或移除 `IMPORT_NUMERIC_TOLERANCE`
+- [x] Task R3.7: 落实或移除 `IMPORT_NUMERIC_TOLERANCE`
   - 现状: `.env.example` 与 SPEC 声明该配置，但 `src/import_xlsx.js` 未读取
 
-- [ ] Task R3.8: 修正 `meta.db_size_bytes` 统计时点
+- [x] Task R3.8: 修正 `meta.db_size_bytes` 统计时点
   - 现状: meta 记录 51,113,984 bytes，当前 DB 实际为 52,760,576 bytes
   - 原因: WAL 模式下在 checkpoint/close 前读取主 DB 文件大小，不能代表最终文件大小
 
 - [ ] Task R3.9: 核实 2026.04 - 2026.07 源数据统计口径
   - 结果: 全量审计确认异常值与源 Excel 一致，不是字段错位或转换错误
   - 风险: 月销量从 2026.03 的 291,479 跳至 2026.04 的 2,924,738，后续月份维持百万级，不能直接并入趋势结论
+
+## Round 4 改造执行 (2026-08-27)
+
+- [x] Task R4.1: 建立本地 Git 改造前基线
+  - 提交: `ca2c66f chore: establish pre-optimization baseline`
+  - 远程: GitHub CLI 已恢复登录；远程私有仓库推送等待对具体文件和目的地的明确确认
+
+- [x] Task R4.2: 转换器 schema 1.1.0 与 `sheet_catalog`
+  - 验证: visible=23, hidden=32, effective=54, skipped=1
+
+- [x] Task R4.3: 全量审计与覆盖保护自动化
+  - 验证: 4,441,989 cells, structural issues=0, value mismatches=0；overwrite=false DB 哈希不变
+
+- [x] Task R4.4: 建立可复现分析生成器
+  - 输出: 结构化 JSON、优化版 Markdown、优化版独立 HTML
+  - 口径: 小类BSR前100、五档分层、月度MoM/YoY、年度同周期YoY、双均价、异常月份附录、GENIMO建议
+
+- [ ] Task R4.5: 业务确认 2026.03-07 数据口径后决定正式纳入或继续隔离

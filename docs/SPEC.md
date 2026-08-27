@@ -31,8 +31,9 @@
 | RAW_EXCEL_PATH | string | 是 | Excel 源文件路径 |
 | DATABASE_URL | string | 是 | SQLite URL, 形如 sqlite:///data/processed/market.db |
 | IMPORT_OVERWRITE | bool | 否 | 是否覆盖已有 DB, 默认 true |
-| IMPORT_NUMERIC_TOLERANCE | int | 否 | 预留的数值解析容差；当前转换器尚未读取该变量，不能依赖其改变行为 |
 | LOG_LEVEL | string | 否 | debug/info/warn/error |
+| ANALYSIS_DB_PATH | string | 否 | 分析生成器读取的 SQLite 路径 |
+| ANALYSIS_CUTOFF | YYYYMM | 否 | 可比分析截止月份，默认 202602 |
 
 ## 3. 数据结构 (Schema)
 
@@ -44,6 +45,7 @@
 - TOP 总销售额表: top_total_sales
 - TOP 平均单价表: top_avg_price
 - 元数据表: meta (记录每次导入的元信息)
+- 工作表目录: sheet_catalog (记录工作表顺序、可见性、有效区域、分类、目标表、导入行数和跳过原因)
 
 ### 工作表范围与可见性口径
 
@@ -165,6 +167,20 @@
 | total_rows | INTEGER | 总记录行数 |
 | db_size_bytes | INTEGER | 生成的 DB 字节数 |
 | schema_version | TEXT | schema 版本 |
+
+### sheet_catalog 工作表目录
+
+| 列名 | 类型 | 含义 |
+|---|---|---|
+| sheet_order | INTEGER PK | 源工作簿顺序（1-based） |
+| sheet_name | TEXT | 源工作表名称 |
+| visibility | TEXT | visible / hidden / very_hidden |
+| hidden_code | INTEGER | SheetJS Hidden 原始代码 |
+| sheet_ref | TEXT | Excel 有效区域 `!ref` |
+| classification | TEXT | monthly / top / empty |
+| target_table | TEXT | 目标业务表；跳过时为 NULL |
+| imported_rows | INTEGER | 实际导入行数 |
+| skip_reason | TEXT | 跳过原因 |
 
 ## 4. 技术方案与架构
 

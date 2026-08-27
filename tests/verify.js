@@ -10,7 +10,7 @@ const { DatabaseSync } = require('node:sqlite');
 
 const ROOT = pathMod.resolve(__dirname, '..');
 const EXCEL = pathMod.resolve(ROOT, 'data/raw/地垫-卖家精灵市场数据.xlsx');
-const DB = pathMod.resolve(ROOT, 'data/processed/market.db');
+const DB = pathMod.resolve(ROOT, process.env.VERIFY_DB_PATH || 'data/processed/market.db');
 
 if (!fsMod.existsSync(EXCEL)) { console.error('FAIL: Excel not found'); process.exit(1); }
 if (!fsMod.existsSync(DB)) { console.error('FAIL: DB not found'); process.exit(1); }
@@ -52,7 +52,19 @@ const metaRows = db.prepare('SELECT * FROM meta').all();
 check('meta has 1 row', metaRows.length === 1, 'rows=' + metaRows.length);
 check('meta imported_at is string', metaRows[0] && typeof metaRows[0].imported_at === 'string');
 check('meta source_file = xlsx', metaRows[0] && metaRows[0].source_file === '地垫-卖家精灵市场数据.xlsx');
-check('meta schema_version = 1.0.0', metaRows[0] && metaRows[0].schema_version === '1.0.0');
+check('meta schema_version = 1.1.0', metaRows[0] && metaRows[0].schema_version === '1.1.0');
+check('meta total_sheets = 55', metaRows[0] && metaRows[0].total_sheets === 55);
+check('meta visible_sheets = 23', metaRows[0] && metaRows[0].visible_sheets === 23);
+check('meta hidden_sheets = 32', metaRows[0] && metaRows[0].hidden_sheets === 32);
+check('meta effective_sheets = 54', metaRows[0] && metaRows[0].effective_sheets === 54);
+check('meta skipped_sheets = 1', metaRows[0] && metaRows[0].skipped_sheets === 1);
+
+const catalogRows = db.prepare('SELECT * FROM sheet_catalog ORDER BY sheet_order').all();
+check('sheet_catalog has 55 rows', catalogRows.length === 55, 'rows=' + catalogRows.length);
+check('sheet_catalog visible = 23', catalogRows.filter((r) => r.visibility === 'visible').length === 23);
+check('sheet_catalog hidden = 32', catalogRows.filter((r) => r.visibility !== 'visible').length === 32);
+check('sheet_catalog effective = 54', catalogRows.filter((r) => r.target_table).length === 54);
+check('sheet_catalog skipped no-range = 1', catalogRows.filter((r) => r.skip_reason === 'no_effective_range').length === 1);
 
 // tables
 const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all();

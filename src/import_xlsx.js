@@ -15,7 +15,7 @@ const RAW_EXCEL_PATH = pathMod.resolve(ROOT, process.env.RAW_EXCEL_PATH || 'data
 const DB_PATH = pathMod.resolve(ROOT, (process.env.DATABASE_URL || 'sqlite:///data/processed/market.db').replace(/^sqlite:\/\/\/?/, ''));
 const IMPORT_OVERWRITE = (process.env.IMPORT_OVERWRITE || 'true').toLowerCase() !== 'false';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
-const SCHEMA_VERSION = '1.0.0';
+const SCHEMA_VERSION = '1.1.0';
 
 // ====== Logger ======
 const LOG_ORDER = { debug: 0, info: 1, warn: 2, error: 3 };
@@ -106,10 +106,11 @@ function detectHeaderRow(sheet) {
   return -1;
 }
 
-function classifySheet(name) {
-  if (name === 'Sheet6') return 'empty';
+function classifySheet(name, sheet) {
+  if (!sheet || !sheet['!ref']) return 'empty';
   if (/^TOP/i.test(name)) return 'top';
-  return 'monthly';
+  if (/^\d{6}$/.test(name) || /^\d{4}\.\d{1,2}$/.test(name)) return 'monthly';
+  return 'unknown';
 }
 
 function safeTableName(type, rawName) {
@@ -253,6 +254,7 @@ function processTopSheet(db, sheet, sheetName) {
   db.exec('COMMIT');
 
   log('info', 'top ' + sheetName + ' -> ' + tableName + ' (' + allRows.length + ' rows, ' + headers.length + ' cols)');
+  return allRows.length;
 }
 
 function main() {
@@ -268,7 +270,10 @@ function main() {
   const dbDir = pathMod.dirname(DB_PATH);
   if (!fsMod.existsSync(dbDir)) fsMod.mkdirSync(dbDir, { recursive: true });
 
-  if (IMPORT_OVERWRITE && fsMod.existsSync(DB_PATH)) {
+  if (fsMod.existsSync(DB_PATH)) {
+    if (!IMPORT_OVERWRITE) {
+      throw new Error('Target DB already exists and IMPORT_OVERWRITE=false: ' + DB_PATH);
+    }
     fsMod.unlinkSync(DB_PATH);
     log('info', 'Removed existing DB');
   }
@@ -293,43 +298,99 @@ function main() {
     + 'source_file TEXT,'
     + 'source_size_bytes INTEGER,'
     + 'total_sheets INTEGER,'
+    + 'visible_sheets INTEGER,'
+    + 'hidden_sheets INTEGER,'
+    + 'effective_sheets INTEGER,'
+    + 'skipped_sheets INTEGER,'
     + 'monthly_tables INTEGER,'
     + 'summary_tables INTEGER,'
     + 'total_rows INTEGER,'
     + 'db_size_bytes INTEGER,'
     + 'schema_version TEXT);');
 
+  db.exec('DROP TABLE IF EXISTS sheet_catalog;');
+  db.exec('CREATE TABLE sheet_catalog ('
+    + 'sheet_order INTEGER PRIMARY KEY,'
+    + 'sheet_name TEXT NOT NULL,'
+    + 'visibility TEXT NOT NULL,'
+    + 'hidden_code INTEGER NOT NULL,'
+    + 'sheet_ref TEXT,'
+    + 'classification TEXT NOT NULL,'
+    + 'target_table TEXT,'
+    + 'imported_rows INTEGER NOT NULL DEFAULT 0,'
+    + 'skip_reason TEXT);');
+
   let totalRows = 0;
   let monthlyCount = 0;
   let topCount = 0;
   let skipCount = 0;
+  let visibleCount = 0;
+  let hiddenCount = 0;
 
-  for (const sheetName of wb.SheetNames) {
+  const sheetMetaByName = new Map(
+    ((wb.Workbook && wb.Workbook.Sheets) || []).map((s) => [s.name, s]),
+  );
+  const catalogStmt = db.prepare('INSERT INTO sheet_catalog '
+    + '(sheet_order, sheet_name, visibility, hidden_code, sheet_ref, classification, target_table, imported_rows, skip_reason) '
+    + 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+
+  for (let sheetIndex = 0; sheetIndex < wb.SheetNames.length; sheetIndex++) {
+    const sheetName = wb.SheetNames[sheetIndex];
     const sheet = wb.Sheets[sheetName];
-    const type = classifySheet(sheetName);
-    if (type === 'empty') { skipCount++; continue; }
-    if (type === 'top') { topCount++; processTopSheet(db, sheet, sheetName); continue; }
+    const sheetMeta = sheetMetaByName.get(sheetName) || {};
+    const hiddenCode = Number(sheetMeta.Hidden || 0);
+    const visibility = hiddenCode === 0 ? 'visible' : hiddenCode === 2 ? 'very_hidden' : 'hidden';
+    if (hiddenCode === 0) visibleCount++; else hiddenCount++;
+
+    const type = classifySheet(sheetName, sheet);
+    if (type === 'empty') {
+      skipCount++;
+      catalogStmt.run(sheetIndex + 1, sheetName, visibility, hiddenCode, null, type, null, 0, 'no_effective_range');
+      continue;
+    }
+    if (type === 'unknown') {
+      throw new Error('Unrecognized non-empty sheet: ' + sheetName);
+    }
+    if (type === 'top') {
+      const tableName = safeTableName(type, sheetName);
+      if (!tableName) throw new Error('Unmapped TOP sheet: ' + sheetName);
+      topCount++;
+      const importedRows = processTopSheet(db, sheet, sheetName);
+      catalogStmt.run(sheetIndex + 1, sheetName, visibility, hiddenCode, sheet['!ref'], type, tableName, importedRows, null);
+      continue;
+    }
     if (type === 'monthly') {
-      monthlyCount++;
       const r = processMonthlySheet(db, sheet, sheetName);
+      monthlyCount++;
       totalRows += r;
+      catalogStmt.run(sheetIndex + 1, sheetName, visibility, hiddenCode, sheet['!ref'], type, safeTableName(type, sheetName), r, null);
     }
   }
 
-  const dbSize = fsMod.existsSync(DB_PATH) ? fsMod.statSync(DB_PATH).size : 0;
-  db.prepare('INSERT INTO meta (imported_at, source_file, source_size_bytes, total_sheets, monthly_tables, summary_tables, total_rows, db_size_bytes, schema_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+  db.prepare('INSERT INTO meta (imported_at, source_file, source_size_bytes, total_sheets, visible_sheets, hidden_sheets, effective_sheets, skipped_sheets, monthly_tables, summary_tables, total_rows, db_size_bytes, schema_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
     new Date().toISOString(),
     pathMod.basename(RAW_EXCEL_PATH),
     fsMod.statSync(RAW_EXCEL_PATH).size,
     wb.SheetNames.length,
+    visibleCount,
+    hiddenCount,
+    monthlyCount + topCount,
+    skipCount,
     monthlyCount,
     topCount,
     totalRows,
-    dbSize,
+    0,
     SCHEMA_VERSION,
   );
 
+  db.exec('PRAGMA wal_checkpoint(TRUNCATE);');
   db.close();
+  let dbSize = fsMod.statSync(DB_PATH).size;
+  const metaDb = new DatabaseSync(DB_PATH);
+  metaDb.prepare('UPDATE meta SET db_size_bytes = ? WHERE id = 1').run(dbSize);
+  metaDb.exec('PRAGMA wal_checkpoint(TRUNCATE);');
+  metaDb.close();
+  dbSize = fsMod.statSync(DB_PATH).size;
   const t2 = Date.now();
   log('info', 'Done in ' + ((t2 - t0) / 1000).toFixed(1) + 's');
   log('info', 'monthly=' + monthlyCount + ' top=' + topCount + ' skipped=' + skipCount + ' rows=' + totalRows);
