@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-27T11:15:29.630Z",
+  "generatedAt": "2026-08-27T11:26:54.819Z",
   "source": "market.db",
   "sourceMeta": {
     "id": 1,
@@ -1051,7 +1051,9 @@
           "yoySales": null,
           "yoyRevenue": null,
           "yoyAvgListPrice": null,
-          "yoyWeightedPrice": null
+          "yoyWeightedPrice": null,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2023",
@@ -1065,7 +1067,9 @@
           "yoySales": 119.10944062860848,
           "yoyRevenue": 99.05680401075291,
           "yoyAvgListPrice": -14.927201191501005,
-          "yoyWeightedPrice": -9.151881616933554
+          "yoyWeightedPrice": -9.151881616933554,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2024",
@@ -1079,7 +1083,9 @@
           "yoySales": 37.15040708723196,
           "yoyRevenue": 32.39899567757645,
           "yoyAvgListPrice": -11.060018458755216,
-          "yoyWeightedPrice": -3.4643800996037033
+          "yoyWeightedPrice": -3.4643800996037033,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2025",
@@ -1093,7 +1099,9 @@
           "yoySales": 20.173558201399832,
           "yoyRevenue": 6.04745132911455,
           "yoyAvgListPrice": -14.506883003643633,
-          "yoyWeightedPrice": -11.75475460967148
+          "yoyWeightedPrice": -11.75475460967148,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2026",
@@ -1107,7 +1115,9 @@
           "yoySales": 781.7905876173626,
           "yoyRevenue": 857.3938010936982,
           "yoyAvgListPrice": 3.074996636627114,
-          "yoyWeightedPrice": 8.573828586741783
+          "yoyWeightedPrice": 8.573828586741783,
+          "cleanYoySales": -5.029799897550147,
+          "cleanYoyRevenue": -15.397960359476492
         }
       ],
       "bsrTop100": {
@@ -2026,7 +2036,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2023",
@@ -2040,7 +2052,9 @@
             "yoySales": 105.12432837403898,
             "yoyRevenue": 136.71208433997109,
             "yoyAvgListPrice": 13.724921612002028,
-            "yoyWeightedPrice": 15.39932206789858
+            "yoyWeightedPrice": 15.39932206789858,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2024",
@@ -2054,7 +2068,9 @@
             "yoySales": 34.33962868474409,
             "yoyRevenue": 30.55919627083894,
             "yoyAvgListPrice": -5.675632356317218,
-            "yoyWeightedPrice": -2.814085799490129
+            "yoyWeightedPrice": -2.814085799490129,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2025",
@@ -2068,7 +2084,9 @@
             "yoySales": 18.118561710398453,
             "yoyRevenue": 3.134603455725249,
             "yoyAvgListPrice": -2.9652599971245808,
-            "yoyWeightedPrice": -12.685523797191733
+            "yoyWeightedPrice": -12.685523797191733,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2026",
@@ -2082,7 +2100,9 @@
             "yoySales": 1217.274924352576,
             "yoyRevenue": 1437.9438114487118,
             "yoyAvgListPrice": -2.703944342680775,
-            "yoyWeightedPrice": 16.751923460821327
+            "yoyWeightedPrice": 16.751923460821327,
+            "cleanYoySales": -0.9333948708057482,
+            "cleanYoyRevenue": -9.686408881965624
           }
         ]
       },
@@ -4953,7 +4973,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -4968,7 +4990,9 @@
             "yoySales": 114.11686417261242,
             "yoyRevenue": 158.8785689691166,
             "yoyAvgListPrice": 20.85648932230011,
-            "yoyWeightedPrice": 20.90526823726464
+            "yoyWeightedPrice": 20.90526823726464,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -4983,7 +5007,9 @@
             "yoySales": 45.30298258145433,
             "yoyRevenue": 45.47875437035527,
             "yoyAvgListPrice": -0.08886628745673475,
-            "yoyWeightedPrice": 0.12096915409316455
+            "yoyWeightedPrice": 0.12096915409316455,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -4998,7 +5024,9 @@
             "yoySales": 14.792977281546449,
             "yoyRevenue": -10.424227204719362,
             "yoyAvgListPrice": -0.6591818141437278,
-            "yoyWeightedPrice": -21.967549830524003
+            "yoyWeightedPrice": -21.967549830524003,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -5013,7 +5041,9 @@
             "yoySales": 1793.3109922893398,
             "yoyRevenue": 2312.960827269786,
             "yoyAvgListPrice": -13.804092024852865,
-            "yoyWeightedPrice": 27.446617966977538
+            "yoyWeightedPrice": 27.446617966977538,
+            "cleanYoySales": -1.6789719814013337,
+            "cleanYoyRevenue": -27.444640329989323
           },
           {
             "segment": "中部（21-50）",
@@ -5028,7 +5058,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -5043,7 +5075,9 @@
             "yoySales": 91.5426188428021,
             "yoyRevenue": 84.6196172320924,
             "yoyAvgListPrice": 1.5576640784818796,
-            "yoyWeightedPrice": -3.6143400630808786
+            "yoyWeightedPrice": -3.6143400630808786,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -5058,7 +5092,9 @@
             "yoySales": 35.415083209492806,
             "yoyRevenue": 18.251880167160017,
             "yoyAvgListPrice": -8.665970979556093,
-            "yoyWeightedPrice": -12.674513529471898
+            "yoyWeightedPrice": -12.674513529471898,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -5073,7 +5109,9 @@
             "yoySales": 17.90549950887892,
             "yoyRevenue": 38.450571190624096,
             "yoyAvgListPrice": 20.876268071949223,
-            "yoyWeightedPrice": 17.425032561944253
+            "yoyWeightedPrice": 17.425032561944253,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -5088,7 +5126,9 @@
             "yoySales": 768.4093893218096,
             "yoyRevenue": 861.4466083568914,
             "yoyAvgListPrice": -1.2215154194384015,
-            "yoyWeightedPrice": 10.713520625075223
+            "yoyWeightedPrice": 10.713520625075223,
+            "cleanYoySales": -8.434247997232058,
+            "cleanYoyRevenue": 2.7588460669612624
           },
           {
             "segment": "尾部（51-100）",
@@ -5103,7 +5143,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -5118,7 +5160,9 @@
             "yoySales": 99.7437774524158,
             "yoyRevenue": 153.7008655884787,
             "yoyAvgListPrice": 17.428567500594426,
-            "yoyWeightedPrice": 27.013150959817445
+            "yoyWeightedPrice": 27.013150959817445,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -5133,7 +5177,9 @@
             "yoySales": 12.383456142989102,
             "yoyRevenue": 15.56482760305682,
             "yoyAvgListPrice": -6.152603694574221,
-            "yoyWeightedPrice": 2.830818315482264
+            "yoyWeightedPrice": 2.830818315482264,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -5148,7 +5194,9 @@
             "yoySales": 26.573271175870406,
             "yoyRevenue": 0.9427755151443673,
             "yoyAvgListPrice": -15.353458222333538,
-            "yoyWeightedPrice": -20.24953248234621
+            "yoyWeightedPrice": -20.24953248234621,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -5163,7 +5211,9 @@
             "yoySales": 491.69444743162353,
             "yoyRevenue": 582.6028553208128,
             "yoyAvgListPrice": 3.559170114156629,
-            "yoyWeightedPrice": 15.364079937507725
+            "yoyWeightedPrice": 15.364079937507725,
+            "cleanYoySales": 9.303242636575959,
+            "cleanYoyRevenue": 27.09545129505555
           }
         ]
       },
@@ -9934,7 +9984,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -9949,7 +10001,9 @@
             "yoySales": 83.86620589615599,
             "yoyRevenue": 102.55089162900299,
             "yoyAvgListPrice": 13.334687288626036,
-            "yoyWeightedPrice": 10.16210980249399
+            "yoyWeightedPrice": 10.16210980249399,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -9964,7 +10018,9 @@
             "yoySales": 61.514271503521755,
             "yoyRevenue": 60.78352016434514,
             "yoyAvgListPrice": -12.679591290380154,
-            "yoyWeightedPrice": -0.45243762818858446
+            "yoyWeightedPrice": -0.45243762818858446,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -9979,7 +10035,9 @@
             "yoySales": 20.12576117297624,
             "yoyRevenue": -7.002772220392817,
             "yoyAvgListPrice": -6.685318908513582,
-            "yoyWeightedPrice": -22.583443491612996
+            "yoyWeightedPrice": -22.583443491612996,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -9994,7 +10052,9 @@
             "yoySales": 2264.648110562437,
             "yoyRevenue": 2873.5040076066143,
             "yoyAvgListPrice": 26.863372290364772,
-            "yoyWeightedPrice": 25.74826648939994
+            "yoyWeightedPrice": 25.74826648939994,
+            "cleanYoySales": -7.945606909670455,
+            "cleanYoyRevenue": -32.23050962199612
           },
           {
             "segment": "6-10",
@@ -10009,7 +10069,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -10024,7 +10086,9 @@
             "yoySales": 170.20955157030374,
             "yoyRevenue": 230.48839746351192,
             "yoyAvgListPrice": 14.92262855483415,
-            "yoyWeightedPrice": 22.308184719193648
+            "yoyWeightedPrice": 22.308184719193648,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -10039,7 +10103,9 @@
             "yoySales": 27.496409014476697,
             "yoyRevenue": 23.165442983085292,
             "yoyAvgListPrice": 15.785266473276627,
-            "yoyWeightedPrice": -3.3969317762507667
+            "yoyWeightedPrice": -3.3969317762507667,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -10054,7 +10120,9 @@
             "yoySales": -2.6077494222731534,
             "yoyRevenue": -13.445793883091161,
             "yoyAvgListPrice": -23.892395545384215,
-            "yoyWeightedPrice": -11.128241103914494
+            "yoyWeightedPrice": -11.128241103914494,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -10069,7 +10137,9 @@
             "yoySales": 1788.6029037835638,
             "yoyRevenue": 2299.1121054496966,
             "yoyAvgListPrice": 22.072783287667775,
-            "yoyWeightedPrice": 27.031050341148767
+            "yoyWeightedPrice": 27.031050341148767,
+            "cleanYoySales": -12.620903921683569,
+            "cleanYoyRevenue": -49.42815354964033
           },
           {
             "segment": "11-20",
@@ -10084,7 +10154,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -10099,7 +10171,9 @@
             "yoySales": 121.39930782901507,
             "yoyRevenue": 243.70405128520488,
             "yoyAvgListPrice": 22.74790994312845,
-            "yoyWeightedPrice": 55.241700913827984
+            "yoyWeightedPrice": 55.241700913827984,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -10114,7 +10188,9 @@
             "yoySales": 38.04364499074537,
             "yoyRevenue": 44.04265930684805,
             "yoyAvgListPrice": -0.3149189840504718,
-            "yoyWeightedPrice": 4.345737405372652
+            "yoyWeightedPrice": 4.345737405372652,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -10129,7 +10205,9 @@
             "yoySales": 21.612842290070123,
             "yoyRevenue": -13.779018637802487,
             "yoyAvgListPrice": 4.121795091618474,
-            "yoyWeightedPrice": -29.102075291897357
+            "yoyWeightedPrice": -29.102075291897357,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -10144,7 +10222,9 @@
             "yoySales": 1002.5370891770542,
             "yoyRevenue": 1408.593315829056,
             "yoyAvgListPrice": -20.164139249378465,
-            "yoyWeightedPrice": 36.82925777627006
+            "yoyWeightedPrice": 36.82925777627006,
+            "cleanYoySales": 21.378830083565468,
+            "cleanYoyRevenue": 10.092927818169262
           },
           {
             "segment": "21-50",
@@ -10159,7 +10239,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -10174,7 +10256,9 @@
             "yoySales": 91.5426188428021,
             "yoyRevenue": 84.6196172320924,
             "yoyAvgListPrice": 1.5576640784818796,
-            "yoyWeightedPrice": -3.6143400630808786
+            "yoyWeightedPrice": -3.6143400630808786,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -10189,7 +10273,9 @@
             "yoySales": 35.415083209492806,
             "yoyRevenue": 18.251880167160017,
             "yoyAvgListPrice": -8.665970979556093,
-            "yoyWeightedPrice": -12.674513529471898
+            "yoyWeightedPrice": -12.674513529471898,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -10204,7 +10290,9 @@
             "yoySales": 17.90549950887892,
             "yoyRevenue": 38.450571190624096,
             "yoyAvgListPrice": 20.876268071949223,
-            "yoyWeightedPrice": 17.425032561944253
+            "yoyWeightedPrice": 17.425032561944253,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -10219,7 +10307,9 @@
             "yoySales": 768.4093893218096,
             "yoyRevenue": 861.4466083568914,
             "yoyAvgListPrice": -1.2215154194384015,
-            "yoyWeightedPrice": 10.713520625075223
+            "yoyWeightedPrice": 10.713520625075223,
+            "cleanYoySales": -8.434247997232058,
+            "cleanYoyRevenue": 2.7588460669612624
           },
           {
             "segment": "51-100",
@@ -10234,7 +10324,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -10249,7 +10341,9 @@
             "yoySales": 99.7437774524158,
             "yoyRevenue": 153.7008655884787,
             "yoyAvgListPrice": 17.428567500594426,
-            "yoyWeightedPrice": 27.013150959817445
+            "yoyWeightedPrice": 27.013150959817445,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -10264,7 +10358,9 @@
             "yoySales": 12.383456142989102,
             "yoyRevenue": 15.56482760305682,
             "yoyAvgListPrice": -6.152603694574221,
-            "yoyWeightedPrice": 2.830818315482264
+            "yoyWeightedPrice": 2.830818315482264,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -10279,7 +10375,9 @@
             "yoySales": 26.573271175870406,
             "yoyRevenue": 0.9427755151443673,
             "yoyAvgListPrice": -15.353458222333538,
-            "yoyWeightedPrice": -20.24953248234621
+            "yoyWeightedPrice": -20.24953248234621,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -10294,7 +10392,9 @@
             "yoySales": 491.69444743162353,
             "yoyRevenue": 582.6028553208128,
             "yoyAvgListPrice": 3.559170114156629,
-            "yoyWeightedPrice": 15.364079937507725
+            "yoyWeightedPrice": 15.364079937507725,
+            "cleanYoySales": 9.303242636575959,
+            "cleanYoyRevenue": 27.09545129505555
           }
         ]
       }
@@ -11215,7 +11315,9 @@
           "yoySales": null,
           "yoyRevenue": null,
           "yoyAvgListPrice": null,
-          "yoyWeightedPrice": null
+          "yoyWeightedPrice": null,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2023",
@@ -11229,7 +11331,9 @@
           "yoySales": 83.24708475952892,
           "yoyRevenue": 99.0575396004818,
           "yoyAvgListPrice": -2.8558267580352403,
-          "yoyWeightedPrice": 8.62794344679514
+          "yoyWeightedPrice": 8.62794344679514,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2024",
@@ -11243,7 +11347,9 @@
           "yoySales": 38.472794511033314,
           "yoyRevenue": 22.794823002180763,
           "yoyAvgListPrice": 2.0638827976212415,
-          "yoyWeightedPrice": -11.322059011095753
+          "yoyWeightedPrice": -11.322059011095753,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2025",
@@ -11257,7 +11363,9 @@
           "yoySales": 40.903597430493946,
           "yoyRevenue": 34.288063904116854,
           "yoyAvgListPrice": -0.2870184911744622,
-          "yoyWeightedPrice": -4.695077802850578
+          "yoyWeightedPrice": -4.695077802850578,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2026",
@@ -11271,7 +11379,9 @@
           "yoySales": 1035.377380060934,
           "yoyRevenue": 1506.1353529688006,
           "yoyAvgListPrice": 0.18557878438583142,
-          "yoyWeightedPrice": 41.46268731217824
+          "yoyWeightedPrice": 41.46268731217824,
+          "cleanYoySales": -0.9339553432027192,
+          "cleanYoyRevenue": -3.3344631666219593
         }
       ],
       "bsrTop100": {
@@ -12190,7 +12300,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2023",
@@ -12204,7 +12316,9 @@
             "yoySales": 67.29235605877176,
             "yoyRevenue": 98.23605900350319,
             "yoyAvgListPrice": 6.346722812084149,
-            "yoyWeightedPrice": 18.496782323909965
+            "yoyWeightedPrice": 18.496782323909965,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2024",
@@ -12218,7 +12332,9 @@
             "yoySales": 31.45194362598143,
             "yoyRevenue": 12.113708153292846,
             "yoyAvgListPrice": -6.095362122336667,
-            "yoyWeightedPrice": -14.71125868455122
+            "yoyWeightedPrice": -14.71125868455122,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2025",
@@ -12232,7 +12348,9 @@
             "yoySales": 40.390266403359036,
             "yoyRevenue": 29.53417158574667,
             "yoyAvgListPrice": -7.36336352001098,
-            "yoyWeightedPrice": -7.732797362476251
+            "yoyWeightedPrice": -7.732797362476251,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2026",
@@ -12246,7 +12364,9 @@
             "yoySales": 1538.899721237954,
             "yoyRevenue": 2417.619458825684,
             "yoyAvgListPrice": 33.75410532996324,
-            "yoyWeightedPrice": 53.61644316614953
+            "yoyWeightedPrice": 53.61644316614953,
+            "cleanYoySales": -4.540378006872848,
+            "cleanYoyRevenue": -10.154009694939647
           }
         ]
       },
@@ -15117,7 +15237,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -15132,7 +15254,9 @@
             "yoySales": 56.893785796691866,
             "yoyRevenue": 98.20713148196401,
             "yoyAvgListPrice": 12.867809152529652,
-            "yoyWeightedPrice": 26.332047171586105
+            "yoyWeightedPrice": 26.332047171586105,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -15147,7 +15271,9 @@
             "yoySales": 36.83991160811884,
             "yoyRevenue": 10.286196193346054,
             "yoyAvgListPrice": -17.428887480994838,
-            "yoyWeightedPrice": -19.404949259845427
+            "yoyWeightedPrice": -19.404949259845427,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -15162,7 +15288,9 @@
             "yoySales": 54.04763409901135,
             "yoyRevenue": 43.169378207650546,
             "yoyAvgListPrice": -7.306937348303688,
-            "yoyWeightedPrice": -7.061618281244753
+            "yoyWeightedPrice": -7.061618281244753,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -15177,7 +15305,9 @@
             "yoySales": 2130.8807193664875,
             "yoyRevenue": 3544.6984297480954,
             "yoyAvgListPrice": 60.473427210257036,
-            "yoyWeightedPrice": 63.37486796618581
+            "yoyWeightedPrice": 63.37486796618581,
+            "cleanYoySales": -6.209490887832647,
+            "cleanYoyRevenue": -13.577400834258269
           },
           {
             "segment": "中部（21-50）",
@@ -15192,7 +15322,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -15207,7 +15339,9 @@
             "yoySales": 108.40965060797289,
             "yoyRevenue": 143.34730568833106,
             "yoyAvgListPrice": 14.814127681585942,
-            "yoyWeightedPrice": 16.7639334255578
+            "yoyWeightedPrice": 16.7639334255578,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -15222,7 +15356,9 @@
             "yoySales": 35.468605535404606,
             "yoyRevenue": 11.931454937273367,
             "yoyAvgListPrice": -12.203715298586658,
-            "yoyWeightedPrice": -17.374616432424872
+            "yoyWeightedPrice": -17.374616432424872,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -15237,7 +15373,9 @@
             "yoySales": 8.513886252670444,
             "yoyRevenue": -0.37560192980508056,
             "yoyAvgListPrice": -5.919009252315988,
-            "yoyWeightedPrice": -8.192028218191982
+            "yoyWeightedPrice": -8.192028218191982,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -15252,7 +15390,9 @@
             "yoySales": 954.839913121247,
             "yoyRevenue": 1327.866841114293,
             "yoyAvgListPrice": 23.792861133299702,
-            "yoyWeightedPrice": 35.363368730452
+            "yoyWeightedPrice": 35.363368730452,
+            "cleanYoySales": -12.253079670529921,
+            "cleanYoyRevenue": -12.628053498397263
           },
           {
             "segment": "尾部（51-100）",
@@ -15267,7 +15407,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -15282,7 +15424,9 @@
             "yoySales": 57.348128948647336,
             "yoyRevenue": 62.489595709467,
             "yoyAvgListPrice": -1.2119067076597378,
-            "yoyWeightedPrice": 3.2675741333394903
+            "yoyWeightedPrice": 3.2675741333394903,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -15297,7 +15441,9 @@
             "yoySales": 15.47304689513751,
             "yoyRevenue": 16.859071791271973,
             "yoyAvgListPrice": 3.690249206226559,
-            "yoyWeightedPrice": 1.2003016577480263
+            "yoyWeightedPrice": 1.2003016577480263,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -15312,7 +15458,9 @@
             "yoySales": 44.178894213121424,
             "yoyRevenue": 29.887559922969675,
             "yoyAvgListPrice": -8.377523405643196,
-            "yoyWeightedPrice": -9.91222353878417
+            "yoyWeightedPrice": -9.91222353878417,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -15327,7 +15475,9 @@
             "yoySales": 535.3579469385094,
             "yoyRevenue": 687.5118859574578,
             "yoyAvgListPrice": 20.677516498510663,
-            "yoyWeightedPrice": 23.94775098857369
+            "yoyWeightedPrice": 23.94775098857369,
+            "cleanYoySales": 5.680057217785195,
+            "cleanYoyRevenue": -2.054207183852741
           }
         ]
       },
@@ -20098,7 +20248,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -20113,7 +20265,9 @@
             "yoySales": 43.318155766414066,
             "yoyRevenue": 84.40076343387837,
             "yoyAvgListPrice": 30.297740277373663,
-            "yoyWeightedPrice": 28.665319789924215
+            "yoyWeightedPrice": 28.665319789924215,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -20128,7 +20282,9 @@
             "yoySales": 72.94214249621021,
             "yoyRevenue": 48.72485278953383,
             "yoyAvgListPrice": -14.04667866292545,
-            "yoyWeightedPrice": -14.003116508867752
+            "yoyWeightedPrice": -14.003116508867752,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -20143,7 +20299,9 @@
             "yoySales": 44.1888664071117,
             "yoyRevenue": 40.83743961488446,
             "yoyAvgListPrice": -5.503509682353258,
-            "yoyWeightedPrice": -2.324331188487616
+            "yoyWeightedPrice": -2.324331188487616,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -20158,7 +20316,9 @@
             "yoySales": 3035.500564822558,
             "yoyRevenue": 4655.302444517339,
             "yoyAvgListPrice": 68.28994945449392,
-            "yoyWeightedPrice": 51.66007296785313
+            "yoyWeightedPrice": 51.66007296785313,
+            "cleanYoySales": 9.260574094735773,
+            "cleanYoyRevenue": -6.5605337062009
           },
           {
             "segment": "6-10",
@@ -20173,7 +20333,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -20188,7 +20350,9 @@
             "yoySales": 108.6086843134698,
             "yoyRevenue": 144.98949656544133,
             "yoyAvgListPrice": -4.15908331335324,
-            "yoyWeightedPrice": 17.43974004327795
+            "yoyWeightedPrice": 17.43974004327795,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -20203,7 +20367,9 @@
             "yoySales": 6.609105578412899,
             "yoyRevenue": -25.072563890937626,
             "yoyAvgListPrice": -23.307271576521128,
-            "yoyWeightedPrice": -29.717601791573145
+            "yoyWeightedPrice": -29.717601791573145,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -20218,7 +20384,9 @@
             "yoySales": 41.049211506458505,
             "yoyRevenue": 35.7675158216737,
             "yoyAvgListPrice": 1.800460233875234,
-            "yoyWeightedPrice": -3.7445765406089904
+            "yoyWeightedPrice": -3.7445765406089904,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -20233,7 +20401,9 @@
             "yoySales": 1521.1003291179825,
             "yoyRevenue": 3002.87513602855,
             "yoyAvgListPrice": 63.62813252729107,
-            "yoyWeightedPrice": 91.40549664293633
+            "yoyWeightedPrice": 91.40549664293633,
+            "cleanYoySales": -47.98963545389564,
+            "cleanYoyRevenue": -64.35779187046057
           },
           {
             "segment": "11-20",
@@ -20248,7 +20418,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -20263,7 +20435,9 @@
             "yoySales": 31.958967571144935,
             "yoyRevenue": 66.8537865671458,
             "yoyAvgListPrice": 16.486475249301357,
-            "yoyWeightedPrice": 26.44368900293761
+            "yoyWeightedPrice": 26.44368900293761,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -20278,7 +20452,9 @@
             "yoySales": 16.444329936257105,
             "yoyRevenue": -1.9232888188006614,
             "yoyAvgListPrice": -16.46767217430177,
-            "yoyWeightedPrice": -15.773733907964793
+            "yoyWeightedPrice": -15.773733907964793,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -20293,7 +20469,9 @@
             "yoySales": 89.60984683968564,
             "yoyRevenue": 55.47187333048882,
             "yoyAvgListPrice": -12.500378785703125,
-            "yoyWeightedPrice": -18.004325238477904
+            "yoyWeightedPrice": -18.004325238477904,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -20308,7 +20486,9 @@
             "yoySales": 937.0766394867524,
             "yoyRevenue": 1467.1517347182664,
             "yoyAvgListPrice": 41.442248632011626,
-            "yoyWeightedPrice": 51.112432297563636
+            "yoyWeightedPrice": 51.112432297563636,
+            "cleanYoySales": 13.067710186173365,
+            "cleanYoyRevenue": 47.454061627858145
           },
           {
             "segment": "21-50",
@@ -20323,7 +20503,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -20338,7 +20520,9 @@
             "yoySales": 108.40965060797289,
             "yoyRevenue": 143.34730568833106,
             "yoyAvgListPrice": 14.814127681585942,
-            "yoyWeightedPrice": 16.7639334255578
+            "yoyWeightedPrice": 16.7639334255578,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -20353,7 +20537,9 @@
             "yoySales": 35.468605535404606,
             "yoyRevenue": 11.931454937273367,
             "yoyAvgListPrice": -12.203715298586658,
-            "yoyWeightedPrice": -17.374616432424872
+            "yoyWeightedPrice": -17.374616432424872,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -20368,7 +20554,9 @@
             "yoySales": 8.513886252670444,
             "yoyRevenue": -0.37560192980508056,
             "yoyAvgListPrice": -5.919009252315988,
-            "yoyWeightedPrice": -8.192028218191982
+            "yoyWeightedPrice": -8.192028218191982,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -20383,7 +20571,9 @@
             "yoySales": 954.839913121247,
             "yoyRevenue": 1327.866841114293,
             "yoyAvgListPrice": 23.792861133299702,
-            "yoyWeightedPrice": 35.363368730452
+            "yoyWeightedPrice": 35.363368730452,
+            "cleanYoySales": -12.253079670529921,
+            "cleanYoyRevenue": -12.628053498397263
           },
           {
             "segment": "51-100",
@@ -20398,7 +20588,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -20413,7 +20605,9 @@
             "yoySales": 57.348128948647336,
             "yoyRevenue": 62.489595709467,
             "yoyAvgListPrice": -1.2119067076597378,
-            "yoyWeightedPrice": 3.2675741333394903
+            "yoyWeightedPrice": 3.2675741333394903,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -20428,7 +20622,9 @@
             "yoySales": 15.47304689513751,
             "yoyRevenue": 16.859071791271973,
             "yoyAvgListPrice": 3.690249206226559,
-            "yoyWeightedPrice": 1.2003016577480263
+            "yoyWeightedPrice": 1.2003016577480263,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -20443,7 +20639,9 @@
             "yoySales": 44.178894213121424,
             "yoyRevenue": 29.887559922969675,
             "yoyAvgListPrice": -8.377523405643196,
-            "yoyWeightedPrice": -9.91222353878417
+            "yoyWeightedPrice": -9.91222353878417,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -20458,7 +20656,9 @@
             "yoySales": 535.3579469385094,
             "yoyRevenue": 687.5118859574578,
             "yoyAvgListPrice": 20.677516498510663,
-            "yoyWeightedPrice": 23.94775098857369
+            "yoyWeightedPrice": 23.94775098857369,
+            "cleanYoySales": 5.680057217785195,
+            "cleanYoyRevenue": -2.054207183852741
           }
         ]
       }
@@ -21379,7 +21579,9 @@
           "yoySales": null,
           "yoyRevenue": null,
           "yoyAvgListPrice": null,
-          "yoyWeightedPrice": null
+          "yoyWeightedPrice": null,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2023",
@@ -21393,7 +21595,9 @@
           "yoySales": 148.54558445136615,
           "yoyRevenue": 92.14708567858312,
           "yoyAvgListPrice": -18.837211026670907,
-          "yoyWeightedPrice": -22.691410469944906
+          "yoyWeightedPrice": -22.691410469944906,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2024",
@@ -21407,7 +21611,9 @@
           "yoySales": 47.340571482926364,
           "yoyRevenue": 39.9894868873639,
           "yoyAvgListPrice": -8.519308234384205,
-          "yoyWeightedPrice": -4.989178826698315
+          "yoyWeightedPrice": -4.989178826698315,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2025",
@@ -21421,7 +21627,9 @@
           "yoySales": -3.880473728338696,
           "yoyRevenue": -8.284479909557918,
           "yoyAvgListPrice": -11.549735262682749,
-          "yoyWeightedPrice": -4.58180179620552
+          "yoyWeightedPrice": -4.58180179620552,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2026",
@@ -21435,7 +21643,9 @@
           "yoySales": 447.30905575249756,
           "yoyRevenue": 439.4448881557703,
           "yoyAvgListPrice": 14.032237576215145,
-          "yoyWeightedPrice": -1.4368787642139114
+          "yoyWeightedPrice": -1.4368787642139114,
+          "cleanYoySales": -13.922701464289267,
+          "cleanYoyRevenue": -21.863223517765206
         }
       ],
       "bsrTop100": {
@@ -22354,7 +22564,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2023",
@@ -22368,7 +22580,9 @@
             "yoySales": 180.36573146292585,
             "yoyRevenue": 172.63709057118302,
             "yoyAvgListPrice": 15.743888542856377,
-            "yoyWeightedPrice": -2.756628226786273
+            "yoyWeightedPrice": -2.756628226786273,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2024",
@@ -22382,7 +22596,9 @@
             "yoySales": 55.4121289792995,
             "yoyRevenue": 47.81144680818497,
             "yoyAvgListPrice": -7.060204659130854,
-            "yoyWeightedPrice": -4.890662151682457
+            "yoyWeightedPrice": -4.890662151682457,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2025",
@@ -22396,7 +22612,9 @@
             "yoySales": -7.218866429675508,
             "yoyRevenue": -10.60302526991742,
             "yoyAvgListPrice": -13.016349110934511,
-            "yoyWeightedPrice": -3.6474644251644817
+            "yoyWeightedPrice": -3.6474644251644817,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2026",
@@ -22410,7 +22628,9 @@
             "yoySales": 662.1175726047353,
             "yoyRevenue": 724.7315931302242,
             "yoyAvgListPrice": 5.945684880783153,
-            "yoyWeightedPrice": 8.215795406932958
+            "yoyWeightedPrice": 8.215795406932958,
+            "cleanYoySales": -2.842923794712282,
+            "cleanYoyRevenue": -11.621148022592443
           }
         ]
       },
@@ -25281,7 +25501,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -25296,7 +25518,9 @@
             "yoySales": 243.07567300219034,
             "yoyRevenue": 233.91419211645587,
             "yoyAvgListPrice": 10.300642681346606,
-            "yoyWeightedPrice": -2.670396535424424
+            "yoyWeightedPrice": -2.670396535424424,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -25311,7 +25535,9 @@
             "yoySales": 82.37993528027816,
             "yoyRevenue": 83.29851112305127,
             "yoyAvgListPrice": -7.562387868139142,
-            "yoyWeightedPrice": 0.5036605816102879
+            "yoyWeightedPrice": 0.5036605816102879,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -25326,7 +25552,9 @@
             "yoySales": -38.34095376886856,
             "yoyRevenue": -40.81076939842563,
             "yoyAvgListPrice": -4.875489857088777,
-            "yoyWeightedPrice": -4.005601417023019
+            "yoyWeightedPrice": -4.005601417023019,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -25341,7 +25569,9 @@
             "yoySales": 947.5549912494424,
             "yoyRevenue": 917.3756935169276,
             "yoyAvgListPrice": -5.971845975232293,
-            "yoyWeightedPrice": -2.8809273006774827
+            "yoyWeightedPrice": -2.8809273006774827,
+            "cleanYoySales": -10.395057529898544,
+            "cleanYoyRevenue": -36.164846931876504
           },
           {
             "segment": "中部（21-50）",
@@ -25356,7 +25586,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -25371,7 +25603,9 @@
             "yoySales": 77.15582450832072,
             "yoyRevenue": 57.41996546918229,
             "yoyAvgListPrice": 0.7025835919045376,
-            "yoyWeightedPrice": -11.140395239001288
+            "yoyWeightedPrice": -11.140395239001288,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -25386,7 +25620,9 @@
             "yoySales": 41.873854357607065,
             "yoyRevenue": 20.57670336397599,
             "yoyAvgListPrice": -10.560365258835269,
-            "yoyWeightedPrice": -15.011328965483317
+            "yoyWeightedPrice": -15.011328965483317,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -25401,7 +25637,9 @@
             "yoySales": 48.10808271228646,
             "yoyRevenue": 76.39622339237302,
             "yoyAvgListPrice": 11.092653557708188,
-            "yoyWeightedPrice": 19.099660303508802
+            "yoyWeightedPrice": 19.099660303508802,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -25416,7 +25654,9 @@
             "yoySales": 576.3277369653708,
             "yoyRevenue": 680.0375913037872,
             "yoyAvgListPrice": 9.494967232362983,
-            "yoyWeightedPrice": 15.334260103504604
+            "yoyWeightedPrice": 15.334260103504604,
+            "cleanYoySales": -2.256787330316745,
+            "cleanYoyRevenue": 9.58247475320193
           },
           {
             "segment": "尾部（51-100）",
@@ -25431,7 +25671,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -25446,7 +25688,9 @@
             "yoySales": 187.90728921733287,
             "yoyRevenue": 240.0352355206041,
             "yoyAvgListPrice": 23.07393936575497,
-            "yoyWeightedPrice": 18.105809840723186
+            "yoyWeightedPrice": 18.105809840723186,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -25461,7 +25705,9 @@
             "yoySales": 15.613496213275813,
             "yoyRevenue": 18.134520938914743,
             "yoyAvgListPrice": -3.803235711082875,
-            "yoyWeightedPrice": 2.18056265765747
+            "yoyWeightedPrice": 2.18056265765747,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -25476,7 +25722,9 @@
             "yoySales": 24.666720748492477,
             "yoyRevenue": -12.160907157517386,
             "yoyAvgListPrice": -26.398328370350022,
-            "yoyWeightedPrice": -29.540865184307975
+            "yoyWeightedPrice": -29.540865184307975,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -25491,7 +25739,9 @@
             "yoySales": 420.82786464277564,
             "yoyRevenue": 520.172181856698,
             "yoyAvgListPrice": 9.600023396456848,
-            "yoyWeightedPrice": 19.07430918314259
+            "yoyWeightedPrice": 19.07430918314259,
+            "cleanYoySales": 19.754720310569972,
+            "cleanYoyRevenue": 55.40279556718828
           }
         ]
       },
@@ -30262,7 +30512,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -30277,7 +30529,9 @@
             "yoySales": 162.52884284942803,
             "yoyRevenue": 122.12039342232134,
             "yoyAvgListPrice": -10.692006441365653,
-            "yoyWeightedPrice": -15.392003784621389
+            "yoyWeightedPrice": -15.392003784621389,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -30292,7 +30546,9 @@
             "yoySales": 67.40703729438124,
             "yoyRevenue": 74.65920509923637,
             "yoyAvgListPrice": -5.862542568077522,
-            "yoyWeightedPrice": 4.332056717605215
+            "yoyWeightedPrice": 4.332056717605215,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -30307,7 +30563,9 @@
             "yoySales": -43.96726204355734,
             "yoyRevenue": -44.49373310211499,
             "yoyAvgListPrice": 7.903314596975131,
-            "yoyWeightedPrice": -0.9395776072318673
+            "yoyWeightedPrice": -0.9395776072318673,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -30322,7 +30580,9 @@
             "yoySales": 135.36693662972436,
             "yoyRevenue": 20.634810222289435,
             "yoyAvgListPrice": -42.446027599716714,
-            "yoyWeightedPrice": -48.746067757142
+            "yoyWeightedPrice": -48.746067757142,
+            "cleanYoySales": -35.560884070058385,
+            "cleanYoyRevenue": -42.40725615678704
           },
           {
             "segment": "6-10",
@@ -30337,7 +30597,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -30352,7 +30614,9 @@
             "yoySales": 379.77617201268947,
             "yoyRevenue": 500.07221223190624,
             "yoyAvgListPrice": 34.77487775449295,
-            "yoyWeightedPrice": 25.073366964967782
+            "yoyWeightedPrice": 25.073366964967782,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -30367,7 +30631,9 @@
             "yoySales": 73.58060627444063,
             "yoyRevenue": 89.05906566404352,
             "yoyAvgListPrice": 27.121255598981044,
-            "yoyWeightedPrice": 8.917159423403898
+            "yoyWeightedPrice": 8.917159423403898,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -30382,7 +30648,9 @@
             "yoySales": -38.859010950852436,
             "yoyRevenue": -35.03126198862818,
             "yoyAvgListPrice": -23.31466427979286,
-            "yoyWeightedPrice": 6.2605283652630295
+            "yoyWeightedPrice": 6.2605283652630295,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -30397,7 +30665,9 @@
             "yoySales": 1547.6192380761922,
             "yoyRevenue": 1524.4703301826949,
             "yoyAvgListPrice": 5.517969986702864,
-            "yoyWeightedPrice": -1.404991357137031
+            "yoyWeightedPrice": -1.404991357137031,
+            "cleanYoySales": 18.15237770581217,
+            "cleanYoyRevenue": -47.992609236597275
           },
           {
             "segment": "11-20",
@@ -30412,7 +30682,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -30427,7 +30699,9 @@
             "yoySales": 625.3203711886875,
             "yoyRevenue": 863.058092919382,
             "yoyAvgListPrice": 10.43655088720521,
-            "yoyWeightedPrice": 32.77692605559652
+            "yoyWeightedPrice": 32.77692605559652,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -30442,7 +30716,9 @@
             "yoySales": 129.89256650869473,
             "yoyRevenue": 93.71978836450494,
             "yoyAvgListPrice": -19.605689755238455,
-            "yoyWeightedPrice": -15.734644531371455
+            "yoyWeightedPrice": -15.734644531371455,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -30457,7 +30733,9 @@
             "yoySales": -27.92999227976807,
             "yoyRevenue": -39.74758339782242,
             "yoyAvgListPrice": -5.163374807033039,
-            "yoyWeightedPrice": -16.39737734444123
+            "yoyWeightedPrice": -16.39737734444123,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -30472,7 +30750,9 @@
             "yoySales": 1176.967185607774,
             "yoyRevenue": 1377.021554488151,
             "yoyAvgListPrice": -2.4193140880118813,
-            "yoyWeightedPrice": 15.666367243819268
+            "yoyWeightedPrice": 15.666367243819268,
+            "cleanYoySales": 20.410356619443082,
+            "cleanYoyRevenue": -5.796507675956386
           },
           {
             "segment": "21-50",
@@ -30487,7 +30767,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -30502,7 +30784,9 @@
             "yoySales": 77.15582450832072,
             "yoyRevenue": 57.41996546918229,
             "yoyAvgListPrice": 0.7025835919045376,
-            "yoyWeightedPrice": -11.140395239001288
+            "yoyWeightedPrice": -11.140395239001288,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -30517,7 +30801,9 @@
             "yoySales": 41.873854357607065,
             "yoyRevenue": 20.57670336397599,
             "yoyAvgListPrice": -10.560365258835269,
-            "yoyWeightedPrice": -15.011328965483317
+            "yoyWeightedPrice": -15.011328965483317,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -30532,7 +30818,9 @@
             "yoySales": 48.10808271228646,
             "yoyRevenue": 76.39622339237302,
             "yoyAvgListPrice": 11.092653557708188,
-            "yoyWeightedPrice": 19.099660303508802
+            "yoyWeightedPrice": 19.099660303508802,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -30547,7 +30835,9 @@
             "yoySales": 576.3277369653708,
             "yoyRevenue": 680.0375913037872,
             "yoyAvgListPrice": 9.494967232362983,
-            "yoyWeightedPrice": 15.334260103504604
+            "yoyWeightedPrice": 15.334260103504604,
+            "cleanYoySales": -2.256787330316745,
+            "cleanYoyRevenue": 9.58247475320193
           },
           {
             "segment": "51-100",
@@ -30562,7 +30852,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -30577,7 +30869,9 @@
             "yoySales": 187.90728921733287,
             "yoyRevenue": 240.0352355206041,
             "yoyAvgListPrice": 23.07393936575497,
-            "yoyWeightedPrice": 18.105809840723186
+            "yoyWeightedPrice": 18.105809840723186,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -30592,7 +30886,9 @@
             "yoySales": 15.613496213275813,
             "yoyRevenue": 18.134520938914743,
             "yoyAvgListPrice": -3.803235711082875,
-            "yoyWeightedPrice": 2.18056265765747
+            "yoyWeightedPrice": 2.18056265765747,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -30607,7 +30903,9 @@
             "yoySales": 24.666720748492477,
             "yoyRevenue": -12.160907157517386,
             "yoyAvgListPrice": -26.398328370350022,
-            "yoyWeightedPrice": -29.540865184307975
+            "yoyWeightedPrice": -29.540865184307975,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -30622,7 +30920,9 @@
             "yoySales": 420.82786464277564,
             "yoyRevenue": 520.172181856698,
             "yoyAvgListPrice": 9.600023396456848,
-            "yoyWeightedPrice": 19.07430918314259
+            "yoyWeightedPrice": 19.07430918314259,
+            "cleanYoySales": 19.754720310569972,
+            "cleanYoyRevenue": 55.40279556718828
           }
         ]
       }
@@ -31543,7 +31843,9 @@
           "yoySales": null,
           "yoyRevenue": null,
           "yoyAvgListPrice": null,
-          "yoyWeightedPrice": null
+          "yoyWeightedPrice": null,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2023",
@@ -31557,7 +31859,9 @@
           "yoySales": 422.92136945071485,
           "yoyRevenue": 553.4771579075967,
           "yoyAvgListPrice": 11.22112723015254,
-          "yoyWeightedPrice": 24.96661947359695
+          "yoyWeightedPrice": 24.96661947359695,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2024",
@@ -31571,7 +31875,9 @@
           "yoySales": 41.79022375250212,
           "yoyRevenue": 2.1905754686960988,
           "yoyAvgListPrice": -13.29992741549757,
-          "yoyWeightedPrice": -27.92833471574745
+          "yoyWeightedPrice": -27.92833471574745,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2025",
@@ -31585,7 +31891,9 @@
           "yoySales": 90.1351026111696,
           "yoyRevenue": 73.34781666539942,
           "yoyAvgListPrice": -3.6516930236792033,
-          "yoyWeightedPrice": -8.829135554259294
+          "yoyWeightedPrice": -8.829135554259294,
+          "cleanYoySales": null,
+          "cleanYoyRevenue": null
         },
         {
           "year": "2026",
@@ -31599,7 +31907,9 @@
           "yoySales": 2455.0130424998497,
           "yoyRevenue": 4430.120078826211,
           "yoyAvgListPrice": 26.50346511388417,
-          "yoyWeightedPrice": 77.30320759513218
+          "yoyWeightedPrice": 77.30320759513218,
+          "cleanYoySales": 75.11914340533514,
+          "cleanYoyRevenue": 50.70132308103521
         }
       ],
       "bsrTop100": {
@@ -32518,7 +32828,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2023",
@@ -32532,7 +32844,9 @@
             "yoySales": 512.1204745968969,
             "yoyRevenue": 619.9237349296995,
             "yoyAvgListPrice": 7.849969579886373,
-            "yoyWeightedPrice": 17.611444937174348
+            "yoyWeightedPrice": 17.611444937174348,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2024",
@@ -32546,7 +32860,9 @@
             "yoySales": 54.08140904484071,
             "yoyRevenue": 16.03980403478611,
             "yoyAvgListPrice": -14.989733376204118,
-            "yoyWeightedPrice": -24.689289412575256
+            "yoyWeightedPrice": -24.689289412575256,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2025",
@@ -32560,7 +32876,9 @@
             "yoySales": 106.56260833237039,
             "yoyRevenue": 88.63305462993276,
             "yoyAvgListPrice": -4.199986078979212,
-            "yoyWeightedPrice": -8.679960931548647
+            "yoyWeightedPrice": -8.679960931548647,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "year": "2026",
@@ -32574,7 +32892,9 @@
             "yoySales": 2671.3386646312906,
             "yoyRevenue": 4945.106945274558,
             "yoyAvgListPrice": 71.37121482379982,
-            "yoyWeightedPrice": 82.04584700028997
+            "yoyWeightedPrice": 82.04584700028997,
+            "cleanYoySales": 69.00171379605825,
+            "cleanYoyRevenue": 39.98290536771454
           }
         ]
       },
@@ -35445,7 +35765,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -35460,7 +35782,9 @@
             "yoySales": 858.8448341593596,
             "yoyRevenue": 1117.6914966677307,
             "yoyAvgListPrice": 24.66168507486417,
-            "yoyWeightedPrice": 26.995677849722966
+            "yoyWeightedPrice": 26.995677849722966,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -35475,7 +35799,9 @@
             "yoySales": 40.32220390217092,
             "yoyRevenue": 7.265283165146097,
             "yoyAvgListPrice": -14.65884907709012,
-            "yoyWeightedPrice": -23.557868831700556
+            "yoyWeightedPrice": -23.557868831700556,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -35490,7 +35816,9 @@
             "yoySales": 116.64602233504526,
             "yoyRevenue": 93.6483529461386,
             "yoyAvgListPrice": -6.873917857235767,
-            "yoyWeightedPrice": -10.615320392700568
+            "yoyWeightedPrice": -10.615320392700568,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "头部（1-20）",
@@ -35505,7 +35833,9 @@
             "yoySales": 2675.8357611606484,
             "yoyRevenue": 4986.889012332843,
             "yoyAvgListPrice": 84.86268466840781,
-            "yoyWeightedPrice": 83.2561235613552
+            "yoyWeightedPrice": 83.2561235613552,
+            "cleanYoySales": 78.80388642580888,
+            "cleanYoyRevenue": 45.257926786589195
           },
           {
             "segment": "中部（21-50）",
@@ -35520,7 +35850,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -35535,7 +35867,9 @@
             "yoySales": -100,
             "yoyRevenue": -100,
             "yoyAvgListPrice": -38.7438565136912,
-            "yoyWeightedPrice": -100
+            "yoyWeightedPrice": -100,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -35550,7 +35884,9 @@
             "yoySales": 4019.4444444444443,
             "yoyRevenue": 3575.5151134818534,
             "yoyAvgListPrice": 7.235969279080834,
-            "yoyWeightedPrice": -10.776436894574026
+            "yoyWeightedPrice": -10.776436894574026,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -35565,7 +35901,9 @@
             "yoySales": -36.42823797914829,
             "yoyRevenue": -14.061824162815583,
             "yoyAvgListPrice": 4.962229952014763,
-            "yoyWeightedPrice": 35.18293831307755
+            "yoyWeightedPrice": 35.18293831307755,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "中部（21-50）",
@@ -35580,7 +35918,9 @@
             "yoySales": 4701.536290954695,
             "yoyRevenue": 6576.235623295583,
             "yoyAvgListPrice": 46.53135257482823,
-            "yoyWeightedPrice": 39.04373972706428
+            "yoyWeightedPrice": 39.04373972706428,
+            "cleanYoySales": 217.35127478753543,
+            "cleanYoyRevenue": 210.0189163626537
           },
           {
             "segment": "尾部（51-100）",
@@ -35595,7 +35935,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -35610,7 +35952,9 @@
             "yoySales": -100,
             "yoyRevenue": -100,
             "yoyAvgListPrice": -100,
-            "yoyWeightedPrice": -100
+            "yoyWeightedPrice": -100,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -35625,7 +35969,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": -9.335407868415214,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -35640,7 +35986,9 @@
             "yoySales": 580.8163265306123,
             "yoyRevenue": 680.0038586036142,
             "yoyAvgListPrice": 0.41851994536477033,
-            "yoyWeightedPrice": 14.568912085063257
+            "yoyWeightedPrice": 14.568912085063257,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "尾部（51-100）",
@@ -35655,7 +36003,9 @@
             "yoySales": 1255.1558752997603,
             "yoyRevenue": 2263.204933711497,
             "yoyAvgListPrice": 62.4727526375447,
-            "yoyWeightedPrice": 74.38620728325856
+            "yoyWeightedPrice": 74.38620728325856,
+            "cleanYoySales": -88.39779005524862,
+            "cleanYoyRevenue": -86.22909023070704
           }
         ]
       },
@@ -40426,7 +40776,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -40441,7 +40793,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -40456,7 +40810,9 @@
             "yoySales": 166.68755305817194,
             "yoyRevenue": 109.24595385763266,
             "yoyAvgListPrice": -16.25631854052674,
-            "yoyWeightedPrice": -21.53891268709106
+            "yoyWeightedPrice": -21.53891268709106,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -40471,7 +40827,9 @@
             "yoySales": 148.1139297110072,
             "yoyRevenue": 116.04059304587078,
             "yoyAvgListPrice": -6.821210423975998,
-            "yoyWeightedPrice": -12.92685852120199
+            "yoyWeightedPrice": -12.92685852120199,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "1-5",
@@ -40486,7 +40844,9 @@
             "yoySales": 2447.5442779599175,
             "yoyRevenue": 4222.3577732505155,
             "yoyAvgListPrice": 63.91852998509313,
-            "yoyWeightedPrice": 69.66762111439628
+            "yoyWeightedPrice": 69.66762111439628,
+            "cleanYoySales": 69.79326639102186,
+            "cleanYoyRevenue": 37.2110908468809
           },
           {
             "segment": "6-10",
@@ -40501,7 +40861,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -40516,7 +40878,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -40531,7 +40895,9 @@
             "yoySales": -32.77134729511011,
             "yoyRevenue": -50.923278227846346,
             "yoyAvgListPrice": -17.33737264924695,
-            "yoyWeightedPrice": -27.000289612253315
+            "yoyWeightedPrice": -27.000289612253315,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -40546,7 +40912,9 @@
             "yoySales": 41.43974903791789,
             "yoyRevenue": 38.855839703532546,
             "yoyAvgListPrice": 3.5666881740252565,
-            "yoyWeightedPrice": -1.8268622165701243
+            "yoyWeightedPrice": -1.8268622165701243,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "6-10",
@@ -40561,7 +40929,9 @@
             "yoySales": 5524.647088032915,
             "yoyRevenue": 16025.380665066066,
             "yoyAvgListPrice": 158.96355310885588,
-            "yoyWeightedPrice": 186.6914210382136
+            "yoyWeightedPrice": 186.6914210382136,
+            "cleanYoySales": 55.3370786516854,
+            "cleanYoyRevenue": -8.99873568438755
           },
           {
             "segment": "11-20",
@@ -40576,7 +40946,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -40591,7 +40963,9 @@
             "yoySales": 38.48646587876476,
             "yoyRevenue": 82.3005716607179,
             "yoyAvgListPrice": 36.17265361726536,
-            "yoyWeightedPrice": 31.63782504227475
+            "yoyWeightedPrice": 31.63782504227475,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -40606,7 +40980,9 @@
             "yoySales": 20.323468685478318,
             "yoyRevenue": -2.914025631964723,
             "yoyAvgListPrice": -16.81365395596727,
-            "yoyWeightedPrice": -19.312520301575663
+            "yoyWeightedPrice": -19.312520301575663,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -40621,7 +40997,9 @@
             "yoySales": 115.02030543956985,
             "yoyRevenue": 89.61709690571102,
             "yoyAvgListPrice": -16.479800676276913,
-            "yoyWeightedPrice": -11.814330038238296
+            "yoyWeightedPrice": -11.814330038238296,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "11-20",
@@ -40636,7 +41014,9 @@
             "yoySales": 1335.7464433639475,
             "yoyRevenue": 3130.2290978950964,
             "yoyAvgListPrice": 127.69716847443418,
-            "yoyWeightedPrice": 124.9860421263997
+            "yoyWeightedPrice": 124.9860421263997,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -40651,7 +41031,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -40666,7 +41048,9 @@
             "yoySales": -100,
             "yoyRevenue": -100,
             "yoyAvgListPrice": -38.7438565136912,
-            "yoyWeightedPrice": -100
+            "yoyWeightedPrice": -100,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -40681,7 +41065,9 @@
             "yoySales": 4019.4444444444443,
             "yoyRevenue": 3575.5151134818534,
             "yoyAvgListPrice": 7.235969279080834,
-            "yoyWeightedPrice": -10.776436894574026
+            "yoyWeightedPrice": -10.776436894574026,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -40696,7 +41082,9 @@
             "yoySales": -36.42823797914829,
             "yoyRevenue": -14.061824162815583,
             "yoyAvgListPrice": 4.962229952014763,
-            "yoyWeightedPrice": 35.18293831307755
+            "yoyWeightedPrice": 35.18293831307755,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "21-50",
@@ -40711,7 +41099,9 @@
             "yoySales": 4701.536290954695,
             "yoyRevenue": 6576.235623295583,
             "yoyAvgListPrice": 46.53135257482823,
-            "yoyWeightedPrice": 39.04373972706428
+            "yoyWeightedPrice": 39.04373972706428,
+            "cleanYoySales": 217.35127478753543,
+            "cleanYoyRevenue": 210.0189163626537
           },
           {
             "segment": "51-100",
@@ -40726,7 +41116,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": null,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -40741,7 +41133,9 @@
             "yoySales": -100,
             "yoyRevenue": -100,
             "yoyAvgListPrice": -100,
-            "yoyWeightedPrice": -100
+            "yoyWeightedPrice": -100,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -40756,7 +41150,9 @@
             "yoySales": null,
             "yoyRevenue": null,
             "yoyAvgListPrice": -9.335407868415214,
-            "yoyWeightedPrice": null
+            "yoyWeightedPrice": null,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -40771,7 +41167,9 @@
             "yoySales": 580.8163265306123,
             "yoyRevenue": 680.0038586036142,
             "yoyAvgListPrice": 0.41851994536477033,
-            "yoyWeightedPrice": 14.568912085063257
+            "yoyWeightedPrice": 14.568912085063257,
+            "cleanYoySales": null,
+            "cleanYoyRevenue": null
           },
           {
             "segment": "51-100",
@@ -40786,7 +41184,9 @@
             "yoySales": 1255.1558752997603,
             "yoyRevenue": 2263.204933711497,
             "yoyAvgListPrice": 62.4727526375447,
-            "yoyWeightedPrice": 74.38620728325856
+            "yoyWeightedPrice": 74.38620728325856,
+            "cleanYoySales": -88.39779005524862,
+            "cleanYoyRevenue": -86.22909023070704
           }
         ]
       }
@@ -41469,7 +41869,9 @@
       "yoySales": 20.173558201399832,
       "yoyRevenue": 6.04745132911455,
       "yoyAvgListPrice": -14.506883003643633,
-      "yoyWeightedPrice": -11.75475460967148
+      "yoyWeightedPrice": -11.75475460967148,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "pp2025": {
       "year": "2025",
@@ -41483,7 +41885,9 @@
       "yoySales": 40.903597430493946,
       "yoyRevenue": 34.288063904116854,
       "yoyAvgListPrice": -0.2870184911744622,
-      "yoyWeightedPrice": -4.695077802850578
+      "yoyWeightedPrice": -4.695077802850578,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "high2025": {
       "year": "2025",
@@ -41497,7 +41901,9 @@
       "yoySales": -3.880473728338696,
       "yoyRevenue": -8.284479909557918,
       "yoyAvgListPrice": -11.549735262682749,
-      "yoyWeightedPrice": -4.58180179620552
+      "yoyWeightedPrice": -4.58180179620552,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "genimo2025": {
       "year": "2025",
@@ -41511,7 +41917,9 @@
       "yoySales": 90.1351026111696,
       "yoyRevenue": 73.34781666539942,
       "yoyAvgListPrice": -3.6516930236792033,
-      "yoyWeightedPrice": -8.829135554259294
+      "yoyWeightedPrice": -8.829135554259294,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "overallTop1002025": {
       "year": "2025",
@@ -41525,7 +41933,9 @@
       "yoySales": 18.118561710398453,
       "yoyRevenue": 3.134603455725249,
       "yoyAvgListPrice": -2.9652599971245808,
-      "yoyWeightedPrice": -12.685523797191733
+      "yoyWeightedPrice": -12.685523797191733,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "ppTop1002025": {
       "year": "2025",
@@ -41539,7 +41949,9 @@
       "yoySales": 40.390266403359036,
       "yoyRevenue": 29.53417158574667,
       "yoyAvgListPrice": -7.36336352001098,
-      "yoyWeightedPrice": -7.732797362476251
+      "yoyWeightedPrice": -7.732797362476251,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "highTop1002025": {
       "year": "2025",
@@ -41553,7 +41965,9 @@
       "yoySales": -7.218866429675508,
       "yoyRevenue": -10.60302526991742,
       "yoyAvgListPrice": -13.016349110934511,
-      "yoyWeightedPrice": -3.6474644251644817
+      "yoyWeightedPrice": -3.6474644251644817,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "genimoTop1002025": {
       "year": "2025",
@@ -41567,7 +41981,9 @@
       "yoySales": 106.56260833237039,
       "yoyRevenue": 88.63305462993276,
       "yoyAvgListPrice": -4.199986078979212,
-      "yoyWeightedPrice": -8.679960931548647
+      "yoyWeightedPrice": -8.679960931548647,
+      "cleanYoySales": null,
+      "cleanYoyRevenue": null
     },
     "ppPeak2025": {
       "month": "202505",

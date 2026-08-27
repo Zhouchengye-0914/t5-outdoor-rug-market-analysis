@@ -123,6 +123,17 @@ function buildAnnual(monthly) {
     const prior = periodSummary(monthly, priorMonths);
     const comparableCurrent = periodSummary(monthly, comparableCurrentMonths);
     const comparable = prior.months > 0 && prior.months === comparableCurrent.months;
+    let cleanYoySales = null, cleanYoyRevenue = null;
+    if (year === '2026') {
+      const cleanMonths = ['202601', '202602'].filter((m) => monthly.some((row) => row.month === m));
+      const cleanPriorMonths = cleanMonths.map((m) => '2025' + m.slice(4));
+      if (cleanMonths.length > 0 && cleanMonths.length === cleanPriorMonths.length) {
+        const cleanPrior = periodSummary(monthly, cleanPriorMonths);
+        const cleanCurrent = periodSummary(monthly, cleanMonths);
+        cleanYoySales = pct(cleanCurrent.sales, cleanPrior.sales);
+        cleanYoyRevenue = pct(cleanCurrent.revenue, cleanPrior.revenue);
+      }
+    }
     return {
       year,
       period: currentMonths[0] + '-' + currentMonths[currentMonths.length - 1],
@@ -133,6 +144,8 @@ function buildAnnual(monthly) {
       yoyRevenue: comparable ? pct(comparableCurrent.revenue, prior.revenue) : null,
       yoyAvgListPrice: comparable ? pct(comparableCurrent.avgListPrice, prior.avgListPrice) : null,
       yoyWeightedPrice: comparable ? pct(comparableCurrent.weightedPrice, prior.weightedPrice) : null,
+      cleanYoySales,
+      cleanYoyRevenue,
     };
   });
 }
@@ -313,9 +326,9 @@ function mdMonthly(rows) {
 }
 
 function mdAnnual(rows) {
-  const out = ['| 年份/数据周期 | YoY比较周期 | 销量 | 销售额($) | SKU平均标价($) | 加权成交均价($) | YOY销量 | YOY销售额 | YOY标价 | YOY成交均价 |',
-    '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|'];
-  for (const r of rows) out.push(`| ${r.year} (${r.period}) | ${r.comparison || '-'} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.avgListPrice, 2)} | ${fmt(r.weightedPrice, 2)} | ${fmtPct(r.yoySales)} | ${fmtPct(r.yoyRevenue)} | ${fmtPct(r.yoyAvgListPrice)} | ${fmtPct(r.yoyWeightedPrice)} |`);
+  const out = ['| 年份/数据周期 | YoY比较周期 | 销量 | 销售额($) | SKU平均标价($) | 加权成交均价($) | YOY销量 | YOY销售额 | YOY标价 | YOY成交均价 | 可比YoY销量⚠️ | 可比YoY销售额⚠️ |',
+    '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
+  for (const r of rows) out.push(`| ${r.year} (${r.period}) | ${r.comparison || '-'} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.avgListPrice, 2)} | ${fmt(r.weightedPrice, 2)} | ${fmtPct(r.yoySales)} | ${fmtPct(r.yoyRevenue)} | ${fmtPct(r.yoyAvgListPrice)} | ${fmtPct(r.yoyWeightedPrice)} | ${r.cleanYoySales != null ? fmtPct(r.cleanYoySales) : '-'} | ${r.cleanYoyRevenue != null ? fmtPct(r.cleanYoyRevenue) : '-'} |`);
   return out.join('\n');
 }
 
@@ -327,9 +340,9 @@ function mdSegments(rows) {
 }
 
 function mdAnnualSegments(rows) {
-  const out = ['| 年份/数据周期 | BSR分层 | YoY比较周期 | SKU数 | 销量 | 销售额($) | 加权成交均价($) | YOY销量 | YOY销售额 | YOY成交均价 |',
-    '|---|---|---|---:|---:|---:|---:|---:|---:|---:|'];
-  for (const r of rows) out.push(`| ${r.year} (${r.period}) | ${r.segment} | ${r.comparison || '-'} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.weightedPrice, 2)} | ${fmtPct(r.yoySales)} | ${fmtPct(r.yoyRevenue)} | ${fmtPct(r.yoyWeightedPrice)} |`);
+  const out = ['| 年份/数据周期 | BSR分层 | YoY比较周期 | SKU数 | 销量 | 销售额($) | 加权成交均价($) | YOY销量 | YOY销售额 | YOY成交均价 | 可比YoY销量⚠️ | 可比YoY销售额⚠️ |',
+    '|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
+  for (const r of rows) out.push(`| ${r.year} (${r.period}) | ${r.segment} | ${r.comparison || '-'} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.weightedPrice, 2)} | ${fmtPct(r.yoySales)} | ${fmtPct(r.yoyRevenue)} | ${fmtPct(r.yoyWeightedPrice)} | ${r.cleanYoySales != null ? fmtPct(r.cleanYoySales) : '-'} | ${r.cleanYoyRevenue != null ? fmtPct(r.cleanYoyRevenue) : '-'} |`);
   return out.join('\n');
 }
 
@@ -393,8 +406,8 @@ function monthlyHtml(rows) {
 }
 
 function annualHtml(rows) {
-  return htmlTable(['年份/数据周期', 'YoY比较周期', '销量', '销售额($)', 'SKU平均标价', '加权成交均价', 'YOY销量', 'YOY销售额', 'YOY标价', 'YOY成交均价'],
-    rows.map((r) => [`${r.year} (${r.period})`, r.comparison || '-', fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2), fmtPct(r.yoySales), fmtPct(r.yoyRevenue), fmtPct(r.yoyAvgListPrice), fmtPct(r.yoyWeightedPrice)]));
+  return htmlTable(['年份/数据周期', 'YoY比较周期', '销量', '销售额($)', 'SKU平均标价', '加权成交均价', 'YOY销量', 'YOY销售额', 'YOY标价', 'YOY成交均价', '可比YoY销量⚠️', '可比YoY销售额⚠️'],
+    rows.map((r) => [`${r.year} (${r.period})`, r.comparison || '-', fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2), fmtPct(r.yoySales), fmtPct(r.yoyRevenue), fmtPct(r.yoyAvgListPrice), fmtPct(r.yoyWeightedPrice), r.cleanYoySales != null ? fmtPct(r.cleanYoySales) : '-', r.cleanYoyRevenue != null ? fmtPct(r.cleanYoyRevenue) : '-']));
 }
 
 function segmentHtml(rows) {
@@ -403,8 +416,8 @@ function segmentHtml(rows) {
 }
 
 function annualSegmentsHtml(rows) {
-  return htmlTable(['年份/数据周期', 'BSR分层', 'YoY比较周期', 'SKU数', '销量', '销售额($)', '加权成交均价($)', 'YoY销量', 'YoY销售额', 'YoY成交均价'],
-    rows.map((r) => [`${r.year} (${r.period})`, r.segment, r.comparison || '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2), fmtPct(r.yoySales), fmtPct(r.yoyRevenue), fmtPct(r.yoyWeightedPrice)]));
+  return htmlTable(['年份/数据周期', 'BSR分层', 'YoY比较周期', 'SKU数', '销量', '销售额($)', '加权成交均价($)', 'YoY销量', 'YoY销售额', 'YoY成交均价', '可比YoY销量⚠️', '可比YoY销售额⚠️'],
+    rows.map((r) => [`${r.year} (${r.period})`, r.segment, r.comparison || '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2), fmtPct(r.yoySales), fmtPct(r.yoyRevenue), fmtPct(r.yoyWeightedPrice), r.cleanYoySales != null ? fmtPct(r.cleanYoySales) : '-', r.cleanYoyRevenue != null ? fmtPct(r.cleanYoyRevenue) : '-']));
 }
 
 function trendHtml(c, category, label) {
