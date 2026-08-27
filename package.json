@@ -1,0 +1,19 @@
+{
+  "name": "t5-market-import",
+  "version": "1.0.0",
+  "description": "Excel -> SQLite converter for outdoor rug market data",
+  "main": "src/import_xlsx.js",
+  "scripts": {
+    "import": "node src/import_xlsx.js",
+    "verify": "node tests/verify.js",
+    "poc": "node sandbox/test_xlsx.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "ISC"
+}
