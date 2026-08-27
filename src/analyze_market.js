@@ -141,10 +141,13 @@ for (const month of sourceMonths) {
 const categories = {};
 for (const category of ['overall', 'pp', 'high', 'genimo']) {
   const monthly = [];
+  const bsrTop100 = [];
   const bsrSegments = [];
   for (const month of analysisMonths) {
     const rows = rawByMonth.get(month).filter((row) => classify(row, category));
     monthly.push({ month, ...summarize(rows) });
+    const top100 = rows.filter((row) => row.rank !== null && row.rank >= 1 && row.rank <= 100);
+    bsrTop100.push({ month, ...summarize(top100) });
     for (const segment of SEGMENTS) {
       const segmentRows = rows.filter((row) => row.rank >= segment.min && row.rank <= segment.max);
       bsrSegments.push({ month, segment: segment.key, ...summarize(segmentRows) });
@@ -153,6 +156,7 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
   categories[category] = {
     monthly: addTrends(monthly),
     annual: buildAnnual(monthly),
+    bsrTop100: { monthly: addTrends(bsrTop100), annual: buildAnnual(bsrTop100) },
     bsrSegments: addTrendsBySegment(bsrSegments),
   };
 }
@@ -263,7 +267,8 @@ let sectionNo = 2;
 for (const category of ['overall', 'pp', 'high', 'genimo']) {
   const c = categories[category];
   md.push(`## ${sectionNo++}、${labels[category]}`, '', '### 月度指标、MoM与YoY', '', mdMonthly(c.monthly), '',
-    '### 年度/同周期汇总', '', mdAnnual(c.annual), '', '### 小类BSR前100分层', '', mdSegments(c.bsrSegments), '');
+    '### 年度/同周期汇总', '', mdAnnual(c.annual), '', '### 小类BSR前100汇总（BSR 1-100）', '', mdMonthly(c.bsrTop100.monthly), '',
+    '### 小类BSR前100年度/同周期汇总', '', mdAnnual(c.bsrTop100.annual), '', '### 小类BSR前100五档分层', '', mdSegments(c.bsrSegments), '');
 }
 
 md.push('## 六、2026.03-2026.07异常附录', '', '| 月份 | 是否纳入可比报告 | 销量 | 销售额($) | SKU平均标价($) | 销量加权均价($) |',
@@ -315,7 +320,7 @@ function segmentHtml(rows) {
 
 const htmlSections = ['overall', 'pp', 'high', 'genimo'].map((category, index) => {
   const c = categories[category];
-  return `<section id="${category}"><h2>${index + 2}、${labels[category]}</h2><details open><summary>月度指标、MoM与YoY</summary>${monthlyHtml(c.monthly)}</details><details><summary>年度/同周期汇总</summary>${annualHtml(c.annual)}</details><details><summary>小类BSR前100五档分层</summary>${segmentHtml(c.bsrSegments)}</details></section>`;
+  return `<section id="${category}"><h2>${index + 2}、${labels[category]}</h2><details open><summary>月度指标、MoM与YoY</summary>${monthlyHtml(c.monthly)}</details><details><summary>年度/同周期汇总</summary>${annualHtml(c.annual)}</details><details open class="bsr-details"><summary><b>小类BSR前100分析</b>（1-100名汇总 + 年度 + 五档分层）</summary><h4>BSR前100月度汇总（1-100名）</h4>${monthlyHtml(c.bsrTop100.monthly)}<h4>BSR前100年度/同周期汇总</h4>${annualHtml(c.bsrTop100.annual)}<h4>BSR前100五档分层（1-5/6-10/11-20/21-50/51-100）</h4>${segmentHtml(c.bsrSegments)}</details></section>`;
 }).join('\n');
 
 const insightHtml = `<section id="insights"><h2>七、趋势结论与GENIMO建议</h2><ul><li><b>整体：</b>2025销量同比 ${fmtPct(insight.overall2025.yoySales)}，销售额同比 ${fmtPct(insight.overall2025.yoyRevenue)}，销量加权均价同比 ${fmtPct(insight.overall2025.yoyWeightedPrice)}。</li><li><b>PP：</b>2025销量同比 ${fmtPct(insight.pp2025.yoySales)}，销售额同比 ${fmtPct(insight.pp2025.yoyRevenue)}。</li><li><b>高客单非PP：</b>2025销量同比 ${fmtPct(insight.high2025.yoySales)}，销售额同比 ${fmtPct(insight.high2025.yoyRevenue)}。</li><li><b>GENIMO：</b>2025年PP销量份额 ${fmt(insight.genimoPpShare2025, 2)}%，品牌销量同比 ${fmtPct(insight.genimo2025.yoySales)}。</li></ul><h3>行动建议</h3><ol><li>优先保障小类BSR 1-20核心PP SKU的库存与广告。</li><li>同时考核销量、销售额与销量加权均价，控制价格下压风险。</li><li>把高客单拆成材质命中与仅价格命中两组，小规模验证非PP第二曲线。</li><li>依据3-5月旺季规律前置补货与新品测试。</li><li>2026.03-07已纳入分析，但该区间源数据口径突变（销量量级跳升），年度预算制定时应区分口径。</li></ol></section>`;
