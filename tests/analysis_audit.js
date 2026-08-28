@@ -154,6 +154,22 @@ for (const month of data.analysisMonths) {
 }
 check('PP and high form an exact overall partition', partitioned);
 
+// 无对应数据（基准分层为空）披露校验：2025.05 源数据小类BSR重复 → 2026.05 中部/尾部 MOM 无基准
+const overallGroups = data.categories.overall.bsrGroups.monthly;
+const mayGap = overallGroups.filter((r) => r.month === '202605' && (r.segment === '中部（21-50）' || r.segment === '尾部（51-100）'));
+check('202605 mid/tail MOM basis=202505 is null with gap reason',
+  mayGap.length === 2
+  && mayGap.every((r) => r.momBasis === '202505' && r.momSales === null && r.momRevenue === null
+    && Boolean(r.momGapReason) && r.momGapReason.includes('202505')));
+check('202605 mid/tail chain (vs 202604) still computed',
+  mayGap.every((r) => r.chainBasis === '202604' && r.chainSales !== null && r.chainRevenue !== null && !r.chainGapReason));
+check('gap reason only when basis segment is empty',
+  overallGroups.filter((r) => r.momGapReason && (r.momSales !== null || r.momRevenue !== null)).length === 0
+  && overallGroups.filter((r) => !r.momGapReason && r.momBasis && r.momSales === null).length === 0);
+for (const [name, output] of [['Markdown', markdown], ['HTML', html]]) {
+  check(name + ' discloses 2025.05 BSR duplication and no-data cells', output.includes('小类BSR同值重复') && output.includes('无对应数据'));
+}
+
 const benchmark = overall.get('202602');
 check('202602 overall benchmark MOM sales ≈ -27.7%', close(benchmark.momSales, -27.7, 0.1), benchmark.momSales.toFixed(3));
 check('202602 overall benchmark MOM revenue ≈ -0.1%', close(benchmark.momRevenue, -0.1, 0.1), benchmark.momRevenue.toFixed(3));

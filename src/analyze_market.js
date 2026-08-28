@@ -146,6 +146,15 @@ function addTrends(monthly) {
     row.chainRevenue = previous ? pct(row.revenue, previous.revenue) : null;
     row.chainAvgListPrice = previous ? pct(row.avgListPrice, previous.avgListPrice) : null;
     row.chainWeightedPrice = previous ? pct(row.weightedPrice, previous.weightedPrice) : null;
+    // 基准月/上月存在但对应分层为空（0 SKU / 0 销量）时，同/环比无对应数据可比。
+    // 典型场景：2025.05 源表小类BSR同值重复（BSR=17 重复112行等），前100全部落入1-20，
+    // 导致 2025.05 中部/尾部为空 → 2026.05 中部/尾部 MOM、2025.06 中部/尾部环比缺失。
+    row.momGapReason = lastYear && (lastYear.skuCount === 0 || lastYear.sales === 0)
+      ? '基准月 ' + lastYear.month + ' 对应分层为空，MOM无对应数据可比'
+      : null;
+    row.chainGapReason = previous && (previous.skuCount === 0 || previous.sales === 0)
+      ? '上月 ' + previous.month + ' 对应分层为空，环比无对应数据可比'
+      : null;
   }
   return monthly;
 }
@@ -513,10 +522,21 @@ function mdAnnual(rows) {
   return out.join('\n');
 }
 
+// 分层表的同/环比单元格：基准/上月分层为空时显示"无对应数据"而非留空或'-'
+function segPct(row, field, gapField) {
+  const value = row[field];
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return row[gapField] ? '无对应数据' : '-';
+  }
+  return fmtPct(value);
+}
+
 function mdSegments(rows) {
   const out = ['| 月份 | BSR分层 | SKU数 | 销量 | 销售额($) | 加权成交均价($) | MOM销量 | MOM销售额 | MOM成交均价 | 环比销量 | 环比销售额 |',
     '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
-  for (const r of rows) out.push(`| ${r.month} | ${r.segment} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.weightedPrice, 2)} | ${fmtPct(r.momSales)} | ${fmtPct(r.momRevenue)} | ${fmtPct(r.momWeightedPrice)} | ${fmtPct(r.chainSales)} | ${fmtPct(r.chainRevenue)} |`);
+  for (const r of rows) out.push(`| ${r.month} | ${r.segment} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.weightedPrice, 2)} | ${segPct(r, 'momSales', 'momGapReason')} | ${segPct(r, 'momRevenue', 'momGapReason')} | ${segPct(r, 'momWeightedPrice', 'momGapReason')} | ${segPct(r, 'chainSales', 'chainGapReason')} | ${segPct(r, 'chainRevenue', 'chainGapReason')} |`);
+  const hasGap = rows.some((r) => r.momGapReason || r.chainGapReason);
+  if (hasGap) out.push('', '> 注：“无对应数据”表示基准月/上月该分层为空（0条Listing），同/环比无法计算。整体市场与高客单的 2026.05 中部/尾部 MOM、2025.06 中部/尾部环比缺失源于 2025.05 源数据小类BSR同值重复（详见一、口径说明）；GENIMO 部分月份分层无在榜商品属正常稀疏。');
   return out.join('\n');
 }
 function mdAnnualSegments(rows) {
@@ -535,6 +555,7 @@ const md = ['# 户外地垫市场分析报告（优化版）', '',
   '- 高客单非PP：排除PP父体后的全部商品（SPEC 7.5，不再叠加材质关键词或价格门槛）。',
   '- 同时提供SKU平均标价和销量加权均价（销售额/销量）。',
   '- 月度MOM（用户口径）= 今年X月 vs 去年X月同月（如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月（连续月环比）；年度YOY = 年度同周期对比。',
+  '- 2025.05（主表导出日 2025-06-19，该表无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部 MOM（同比2025.05）与 2025.06 中部/尾部环比显示“无对应数据”；2026.05 头部 MOM 的基准为上述异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考，不可解读为真实头部同比。GENIMO 部分月份分层无在榜商品亦显示“无对应数据”（正常稀疏，非数据错误）。',
   '- BSR头部/中部/尾部分别为1-20、21-50、51-100；五档明细为1-5、6-10、11-20、21-50、51-100，区间不重叠。',
   '- 年度YoY使用同周期比较；2023对2022仅比较6-12月。2026.01-06对2025.01-06虽月份一致，但数据范围不同，表内明确标注，不把它解释为严格同范围市场增减。', ''];
 
@@ -652,8 +673,12 @@ function annualHtml(rows) {
 }
 
 function segmentHtml(rows) {
-  return htmlTable(['月份', '小类BSR分层', 'SKU数', '销量', '销售额($)', '加权成交均价', 'MOM销量', 'MOM销售额', 'MOM成交均价', '环比销量', '环比销售额'],
-    rows.map((r) => [r.month, r.segment, fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2), fmtPct(r.momSales), fmtPct(r.momRevenue), fmtPct(r.momWeightedPrice), fmtPct(r.chainSales), fmtPct(r.chainRevenue)]));
+  const hasGap = rows.some((r) => r.momGapReason || r.chainGapReason);
+  const table = htmlTable(['月份', '小类BSR分层', 'SKU数', '销量', '销售额($)', '加权成交均价', 'MOM销量', 'MOM销售额', 'MOM成交均价', '环比销量', '环比销售额'],
+    rows.map((r) => [r.month, r.segment, fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2), segPct(r, 'momSales', 'momGapReason'), segPct(r, 'momRevenue', 'momGapReason'), segPct(r, 'momWeightedPrice', 'momGapReason'), segPct(r, 'chainSales', 'chainGapReason'), segPct(r, 'chainRevenue', 'chainGapReason')]));
+  return table + (hasGap
+    ? '<p class="note">*无对应数据：基准月/上月该分层为空（0条Listing），同/环比无法计算。整体市场与高客单的 2026.05 中部/尾部 MOM、2025.06 中部/尾部环比缺失源于 2025.05 源数据小类BSR同值重复（详见一、口径说明）；GENIMO 部分月份分层无在榜商品属正常稀疏。</p>'
+    : '');
 }
 function annualSegmentsHtml(rows) {
   return htmlTable(['年份/数据周期', 'BSR分层', 'YoY比较周期', 'SKU数', '销量', '销售额($)', '加权成交均价($)', 'YoY销量', 'YoY销售额', 'YoY成交均价', '同比范围一致性'],
@@ -693,7 +718,7 @@ const coverageScopeText = `核心明细覆盖 ${analysisMonths.length} 个月（
 const anomalySectionHtml = `<section id="anomaly"><h2>六、2026.07附录/参考</h2><p class="note">${coverageScopeText} 2026.07 超出核心截止月份 202606，仅作附录/参考。2026 全年已统一为竞品父ASIN去重口径。</p>${htmlTable(['月份', '状态', '销量', '销售额($)', 'SKU平均标价', '加权成交均价'], sourceDiagnostics.filter((row) => row.month > REPORT_CUTOFF).map((row) => [row.month, '附录/参考（> ' + REPORT_CUTOFF + '）', fmt(row.sales), fmt(row.revenue), fmt(row.avgListPrice, 2), fmt(row.weightedPrice, 2)]))}</section>`;
 let htmlOutput = html
   .replace(/<div id="dashboard" class="scope-notice"><span>◎<\/span><div>[\s\S]*?<\/div><\/div>/, `<div id="dashboard" class="scope-notice"><span>◎</span><div><b>分析范围：</b>${esc(coverageScopeText)}</div></div>`)
-  .replace(/<section id="definitions">[\s\S]*?<\/section>/, `<section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>；2026父体层级取同类候选变体中的最佳可解析名次，销量/销售额仍只取固化代表行，不合计子体；每分类每月最多100条，头中尾和五档均复用该Top100集合。</li><li>PP塑料地垫：标题按不区分大小写的完整单词 <code>plastic</code>（单词边界）筛选，空标题按空字符串；2026同父体任一变体命中即归PP。</li><li>高客单非PP：排除PP父体后的全部商品（SPEC 7.5），不再叠加材质关键词或价格门槛。</li><li>均价同时给出SKU平均标价与销量加权成交均价（销售额/销量）。月度MOM（用户口径）= 今年X月 vs 去年X月同月；月度环比 = 本月 vs 上月；年度表使用同月份集合比较。2026与2025数据范围不同，报告保留范围警告。</li></ul><p class="note">${esc(coverageScopeText)}</p></section>`)
+  .replace(/<section id="definitions">[\s\S]*?<\/section>/, `<section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>；2026父体层级取同类候选变体中的最佳可解析名次，销量/销售额仍只取固化代表行，不合计子体；每分类每月最多100条，头中尾和五档均复用该Top100集合。</li><li>PP塑料地垫：标题按不区分大小写的完整单词 <code>plastic</code>（单词边界）筛选，空标题按空字符串；2026同父体任一变体命中即归PP。</li><li>高客单非PP：排除PP父体后的全部商品（SPEC 7.5），不再叠加材质关键词或价格门槛。</li><li>均价同时给出SKU平均标价与销量加权成交均价（销售额/销量）。月度MOM（用户口径）= 今年X月 vs 去年X月同月；月度环比 = 本月 vs 上月；年度表使用同月份集合比较。2026与2025数据范围不同，报告保留范围警告。</li><li>2025.05（主表导出日 2025-06-19，无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部 MOM（同比2025.05）与 2025.06 中部/尾部环比显示"无对应数据"；2026.05 头部 MOM 的基准为异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考。GENIMO 部分月份分层无在榜商品亦显示"无对应数据"（正常稀疏）。</li></ul><p class="note">${esc(coverageScopeText)}</p></section>`)
   .replace(/<section id="anomaly">[\s\S]*?<\/section>/, anomalySectionHtml)
   .replace('销量、销售额、双均价 · 小类BSR前100 · 月度MoM与年度YoY', '销量、销售额、双均价 · 小类BSR Top100 · 月度YOY与MOM')
   .replace('<a href="#genimo"><span class="nav-icon">G</span>GENIMO</a>', '<a href="#genimo"><span class="nav-icon">G</span>GENIMO</a><a href="#genimo-products"><span class="nav-icon">Top</span>GENIMO主力ASIN</a>')
