@@ -10,7 +10,7 @@
 - **数据源**: `data/raw/地垫-卖家精灵市场数据.xlsx` (卖家精灵市场数据, 美国站, 2022.06 - 2026.07)
 - **输出**: `data/processed/market.db` (单文件 SQLite, ~48 MB)
 - **工作表口径**: Excel 界面可见 23 张；工作簿内部另有 32 张隐藏表（31 张历史月度明细 + 1 张无有效区域的遗留 `Sheet6`）
-- **规模**: 73,812 条产品记录, 54 张业务表（50 月度 + 4 TOP）+ 1 张 meta 元数据表
+- **规模**: 主 Excel 基础导入 73,812 条；应用 2026.01-07 竞品父体代表行后当前为 62,564 条，54 张业务表（50 月度 + 4 TOP）+ meta/sheet_catalog/analysis_replacements 元数据
 
 > 原始需求要求“历年”分析及年度/月度 YoY、MoM，因此 31 张隐藏历史月度表属于有效数据并纳入转换。55 是工作簿内部登记总数，不是 Excel 界面可见子表数；隐藏的空白 `Sheet6` 被跳过。
 
@@ -28,14 +28,20 @@
 │   ├── TASKS.md               # 任务清单 (全部 [x])
 │   └── REVIEWS.md             # 审查草稿 (默认空)
 ├── data/
-│   ├── raw/地垫-卖家精灵市场数据.xlsx   # 原始 (gitignore)
-│   └── processed/market.db             # 转换结果 (gitignore)
+│   ├── raw/                             # 主 Excel + 7 份 2026 竞品快照
+│   └── processed/                       # market.db + competitor_809440.db
 ├── src/
-│   └── import_xlsx.js         # 主转换脚本
+│   ├── import_xlsx.js                   # 主 Excel 基础导入
+│   ├── apply_competitor_2026.js         # 2026.01-07 父体代表行确定性重放
+│   └── analyze_market.js                # JSON / Markdown / HTML 分析生成
 ├── sandbox/
 │   └── test_xlsx.js           # PoC (验证 xlsx 能读取)
 ├── tests/
-│   └── verify.js              # 数据完整性验证
+│   ├── verify.js                        # 两阶段快速验收
+│   ├── full_audit.js                    # 主库全量逐单元格审计
+│   ├── competitor_audit.js              # 7 份竞品原表/raw/dedup审计
+│   ├── analysis_audit.js                # MOM/环比/Top100/分层回勾
+│   └── overwrite_guard.js               # 覆盖保护
 ├── tmp/                       # 临时文件 (可随时清空)
 └── node_modules/              # 依赖 (gitignore)
 ```
@@ -49,18 +55,14 @@ npm install
 # 2. 运行 PoC (验证 xlsx 能读取)
 npm run poc
 
-# 3. 执行转换
+# 3. 执行完整转换（基础 Excel 导入 + 2026.01-07 竞品父体替换）
 npm run import
 
-# 4. 验证数据完整性
-npm run verify
-
-# 5. 全量逐 cell 审计 + 覆盖保护
-npm run audit
-npm run test:overwrite
-
-# 6. 生成优化版结构化数据、Markdown 和独立 HTML
+# 4. 生成优化版结构化数据、Markdown 和独立 HTML
 npm run analyze
+
+# 5. 一次运行全部数据、分析和覆盖保护验收
+npm test
 ```
 
 ## 4. DB Schema 概览
@@ -71,6 +73,7 @@ npm run analyze
 - TOP 销量表: `top_sales_volume` / `top_sales_volume_ratio` / `top_total_sales` / `top_avg_price`
 - 元数据表: `meta` (记录每次导入)
 - 工作表目录: `sheet_catalog`（记录顺序、可见性、有效区域、分类、目标表、行数和跳过原因）
+- 替换审计表: `analysis_replacements`（记录 2026.01-07 基础/竞品行数、源库 SHA-256、代表行规则和应用时间）
 
 ### 4.2 通用列
 
@@ -156,39 +159,34 @@ WHERE 重量 IS NOT NULL LIMIT 10;
 
 ### 6.1 标准验收 (tests/verify.js)
 
-> 2026.01-07 月度表已替换为竞品父ASIN去重口径（64-94 父商品/月 vs 原 Excel 1045-2000 行），故 2026 月表行数校验不匹配为预期行为（SPEC 8.5）。
+验证脚本已按当前有效数据源分流：2026.01-07 对 `competitor_809440.db/dedup_YYYYMM`，其余表对主 Excel；正式验收不再保留“预期失败”。
 
 ```
-[PASS] meta has 1 row (rows=1)
-[PASS] meta imported_at is string
-[PASS] meta source_file = xlsx
-[PASS] meta schema_version = 1.1.0
-
-Total tables in DB: 57
-Checked 54 tables, mismatches=7 (2026.01-07, expected per SPEC 8.5)
-
-[PASS] sample monthly_202206 (rows=6)
-[PASS] sample monthly_202506 (rows=6)
-[FAIL] sample monthly_202607 (rows=6, replaced with dedup data)
-
-========== Summary ==========
-PASS: 63
-FAIL: 8 (7 row-count + 1 sample, all 2026, expected)
+========== VERIFY SUMMARY ==========
+PASS: 128
+FAIL: 0
 ```
 
 ### 6.2 全表逐 cell 校验（`tests/full_audit.js`）
 
-> 2026.01-07 已替换为竞品父ASIN去重口径，full_audit 对 2026 月表的逐 cell 对比预期不一致（每表仅 64-94 行 vs Excel 的 1045-2000 行），其余 50 表零差异（4,441,989 cells）。
-
 ```
-[STRUCT] 2026.1 expected rows/cols=1239/63 actual=64/63
-[VALUE] 2026 月表: 数据已替换为竞品父ASIN去重口径，与 Excel 原值不同属预期行为
-... (其余 50 表: 4,441,989 cells 零差异)
+Sheets checked: 54
+Cells checked: 3,694,439
+Structural issues: 0
+Value mismatches: 0
+Numeric type changes: 68,226 (informational)
 ```
 
-详见 `tests/full_audit.js` 和 `tests/overwrite_guard.js`。
+### 6.3 竞品源链路与分析公式验收
 
-### 6.3 自审修复历史
+```text
+competitor_audit: 7 snapshots / 1,365,000 cells / 0 failures
+analysis_audit: 42 checks / 0 failures
+```
+
+竞品审计逐月确认：Excel 3000 行与 `raw_YYYYMM` 零值差异、父/ASIN键覆盖完整、64/74/82/79/88/91/94 条 `dedup_YYYYMM` 均为原始表中的精确代表行。分析审计确认：Top100 每类每月不超过100、头中尾/五档精确回勾、PP+high 精确回勾整体、MOM/连续环比基准正确、核心截止 202606、202602 四个验收值复现。
+
+### 6.4 自审修复历史
 
 详见 `docs/REVIEWS.md`. 自审发现并修复了 4 个 bug:
 
@@ -204,9 +202,10 @@ FAIL: 8 (7 row-count + 1 sample, all 2026, expected)
 | 阶段 | 耗时 |
 |---|---|
 | Excel 加载 (44 MB) | 17.5 s |
-| DB 写入 (73,812 行 × 54 表) | ~3 s |
-| 总耗时 | 20.2 s |
-| 输出 DB 大小 | 48.75 MB |
+| 基础 DB 写入 (73,812 行 × 54 表) | ~3 s |
+| 2026.01-07 父体代表行重放 | <1 s |
+| 基础导入总耗时 | 约20.2 s |
+| 当前有效记录 | 62,564 行 / 3,694,439 数据单元格 |
 
 ## 8. 后续可扩展
 

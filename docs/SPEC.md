@@ -299,21 +299,21 @@ db.exec('COMMIT');
 ## 6. 验收标准
 
 1. 范围完整性: 识别 23 张可见表、32 张隐藏表；导入 50 张月度明细 + 4 张 TOP 汇总；跳过 1 张无 `!ref` 的遗留表
-2. 数据完整性: 50 个月度表的行数与 Excel 中 !ref 行数一致 (误差 0)
+2. 数据完整性: 2026.01-07 之外的月度表及 4 张 TOP 表须与原始 Excel 行数一致；2026.01-07 须与 `competitor_809440.db` 的 `dedup_YYYYMM` 行数和值一致
 3. 列完整性: 每个有效 sheet 写入 SQLite 的源数据列数等于 Excel 有效区域列数
 4. 类型一致性: 数值列实际为 REAL/INTEGER; 文本列实际为 TEXT
 5. 空值归一: 空 cell 全部为 NULL, 无空字符串
 6. meta 表: 每次导入写入一条元数据记录，且表数口径不得把 55 解释为可见表数
 7. DB 文件: 单文件 data/processed/market.db, 可被任何 SQLite 客户端打开
 8. 抽查验证: 至少覆盖隐藏旧月、可见月份、TOP 汇总和最新月份
-9. 全量验证: `tests/full_audit.js` 必须存在并可复跑，对 54 张有效业务表逐行逐列比对；不得只在文档中声称通过
+9. 全量验证: `tests/full_audit.js` 必须按当前有效数据源对 54 张业务表逐行逐列比对；`tests/competitor_audit.js` 必须另行核对 7 份竞品 Excel、`raw_YYYYMM` 和 `dedup_YYYYMM`；不得只在文档中声称通过
 10. 覆盖保护: `IMPORT_OVERWRITE=false` 且 DB 已存在时，导入命令必须非零退出且原 DB 不变
 11. 值与存储类型分别验收: 源数值与 DB 数值等值不代表 SQLite 存储类型一致；全量审计必须分别报告 value mismatch 与 numeric type change
 12. 数据口径异常处置: 2026.03 - 2026.07 源 Excel 为子体级展开口径（销量虚增约 10 倍），已用竞品快照按父 ASIN 去重数据替换（见第 7 章）；替换表须保留列名交集并填充 month_label
 13. 需求覆盖完整性: 交付物必须同时包含整体市场、PP/plastic、高客单非 PP、GENIMO 四个类别；每类均有销量、销售额、两种均价、月度 MOM/连续环比、年度同周期 YoY、BSR 前100及趋势结论
-14. PP 筛选验收: 标题必须按不区分大小写的完整单词 `plastic` 筛选；每月先按父 ASIN 优先、否则 ASIN 去重，同一 Listing 键只能计一次
+14. PP 筛选验收: 标题必须按不区分大小写的完整单词 `plastic` 筛选；每月按父 ASIN 优先、否则 ASIN 去重，同一 Listing 键只能计一次；2026 父体任一变体命中时该父体归入 PP
 15. 高客单验收: 排除 PP 后的所有商品都必须纳入 high 类别；不得因未命中 polypropylene/sandwich/woven/braided 或价格低于 $40 而被排除
-16. BSR 前100验收: 每类别每月独立 Listing 数不超过100；只允许使用 BSR 1-100，100 之后不得进入核心分析；头中尾和五档边界必须与 7.6 一致且不重复计数
+16. BSR 前100验收: 每类别每月独立 Listing 数不超过100；只允许使用 BSR 1-100，100 之后不得进入核心分析；头中尾和五档必须复用同一份已截断 Top100 集合，边界与 7.6 一致且各档合计须精确回勾 Top100
 17. BSR 精度验收: 每个父体的层级使用其候选变体中可解析的最小小类 BSR；需要保留多值解析标记，并对空值、换行、多值和异常值抽查
 18. 公式验收: BSR Top100 月度汇总的 MOM 必须按同月跨年比较（如 2024.05 vs 2023.05），连续环比必须按本月 vs 上月；两者须分别展示基准月份
 19. 截止月份验收: 核心同比/环比数据和趋势结论至少覆盖至 2026.06；2026.07 若出现必须明确标记为附录/参考，不得改变核心截止月份
@@ -343,17 +343,18 @@ db.exec('COMMIT');
 ### 7.2 新数据库：data/processed/competitor_809440.db
 
 - `raw_YYYYMM`：原始 3000 行导入（含月销量/月销售额）
-- `dedup_YYYYMM`：按父 ASIN 去重（同一父 ASIN 多子体只保留 1 条；无父 ASIN 按自身保留）。保留规则必须可复现：优先保留可解析小类 BSR 最小的代表变体；BSR 相同或都无法解析时，再按月销量降序和稳定的源行顺序决胜，禁止随机选择。
+- `dedup_YYYYMM`：按父 ASIN 去重（同一父 ASIN 多子体只保留 1 条；无父 ASIN 按自身保留）。本项目把库内已复核的 `dedup_YYYYMM` 固化为“指标代表行快照”；后续重放必须逐值复用该快照，不得重新随机抽样或擅自改选代表行，以确保 202602 等验收基准不漂移。
 - 分析层独立 Listing 键：父 ASIN 非空时使用父 ASIN，否则使用 ASIN。每月同一 Listing 键只能计一次，禁止把同父体的子体销量/销售额重复相加。
-- 对 PP/plastic 分析，先筛选标题完整单词 `plastic`，再按独立 Listing 键去重；同一父体的 plastic 变体中，层级使用可解析的最小小类 BSR，代表行指标只能取被选中的一条记录。
-- 对整体、高客单非 PP 和 GENIMO 分析，采用同样的月度独立 Listing 去重规则；原始子体明细仍须保留供审计。
+- 分析采用“两层口径”：销量、销售额、价格等指标来自固化代表行；BSR Top100/分层的名次从同父体且符合当前分类的候选变体中取可解析的最小小类 BSR。禁止因取最佳 BSR 而把指标代表行一并替换，也禁止汇总同父体子体指标。
+- 对 PP/plastic，2026 同父体任一标题命中完整单词 `plastic` 即把父体归入 PP，层级取其 plastic 候选变体最佳小类 BSR；high 是其严格补集。GENIMO 同理按父体任一候选变体的品牌识别并取品牌候选最佳 BSR。原始子体明细须保留供审计。
 
 去重结果：202601=64、202602=74、202603=82、202604=79、202605=88、202606=91、202607=94 个父商品。
 
 ### 7.3 market.db 月度表替换规则（2026 全年）
 
-- `monthly_202601` ~ `monthly_202607` 已用 `dedup_YYYYMM` 替换（DROP + CREATE + INSERT）
+- `src/apply_competitor_2026.js` 将 `dedup_YYYYMM` 确定性重放到 `monthly_202601` ~ `monthly_202607`（保留目标 schema，DELETE + INSERT，并重置行号）
 - 列映射取目标表与 dedup 表列名交集；缺失列（如 月销量增长率、_7天促销）置 NULL；month_label 回填月份
+- `analysis_replacements` 必须记录月份、基础 Excel 行数、竞品 raw/dedup 行数、源库 SHA-256、选取说明和应用时间；`sheet_catalog.imported_rows` 更新为当前实际表行数
 - 替换后 2026 全年为竞品父 ASIN 去重口径（64-94 商品/月），与 2025 全市场口径（1700-2000 SKU）跨年对比存在范围差异，报告须标注
 - 2026.07 可留在库内用于明细、审计和参考材料对照，但本次核心分析与同比/环比结论截止 2026.06；程序和报告必须明确区分“源数据覆盖到 2026.07”和“核心统计截止 2026.06”。
 - 参考 Excel 中 2025.1-2026.7 的 PP 数值是在其自身数据源和去重口径下生成的；2026 年切换竞品快照后，不得无条件声称所有月度总量与参考 Excel 完全相等。只能在相同数据源、相同截止月份、相同筛选、去重和 BSR 解析规则下做逐月校验。
@@ -365,7 +366,7 @@ db.exec('COMMIT');
 | MOM（月度，按用户定义） | 今年 X 月 vs 去年 X 月（跨年同月，如 2025.01 vs 2024.01）；BSR Top100 月度汇总同样按 2024.05 vs 2023.05 计算 |
 | 环比（月度） | 本月 vs 上月（连续月环比），单独列示 |
 | YoY（年度） | 年度同周期对比（今年 vs 去年同月份集合）；核心 2026 年比较为 2026.01-06 vs 2025.01-06 |
-| 可比口径列 | 2026 年额外输出 `cleanYoySales/cleanYoyRevenue`，并明确比较月份和口径；2026.01-02 为最近无异常的强制验收基准，2026.03-06 如使用竞品快照也必须披露与 2025 全市场的范围差异 |
+| 同比范围标记 | 年度行输出 `scopeComparable/scopeNote`；2026.01-06 vs 2025.01-06 可计算同月份数学同比，但必须标记竞品父体口径 vs 全市场 SKU 口径的范围差异，不得命名为“严格同口径” |
 
 月度表和 BSR Top100 表必须同时显示：当前月份、MOM 基准月份、连续环比基准月份、MOM 销量/销售额/均价、连续环比销量/销售额/均价。缺少基准字段或把连续环比标成用户定义的 MOM，均视为不合格。
 
@@ -374,20 +375,20 @@ db.exec('COMMIT');
 | 类别 | 筛选规则 |
 |---|---|
 | overall | 全部商品 |
-| pp | 商品标题（COALESCE 空串）必须按不区分大小写的完整单词 `plastic` 匹配；必须使用单词边界或等价的完整词匹配，不得用会把 `plastics` 等扩展词误纳入的简单子串替代 |
-| high | 排除 PP 后的全部商品；不再叠加 polypropylene/sandwich/woven/braided 关键词或 `$40` 价格门槛。丙纶、三明治等仅为该集合中的材质示例 |
-| genimo | 品牌（COALESCE 空串）等于 `genimo`（不区分大小写） |
+| pp | 商品标题（COALESCE 空串）必须按不区分大小写的完整单词 `plastic` 匹配；不得把 `plastics` 等扩展词误纳入；2026 父体任一候选变体命中即将父体归入 PP |
+| high | 排除 PP 父体后的全部商品；不再叠加 polypropylene/sandwich/woven/braided 关键词或 `$40` 价格门槛。丙纶、三明治等仅为该集合中的材质示例 |
+| genimo | 品牌（COALESCE 空串）等于 `genimo`（不区分大小写）；2026 按父体任一候选变体识别 |
 
-分类顺序必须是：先按完整单词 `plastic` 判定 PP，再将所有非 PP 商品归入 high；GENIMO 是品牌切片，可与 PP/non-PP 结果交叉展示。空标题按空字符串处理。
+分类顺序必须是：先按完整单词 `plastic` 判定 PP 父体，再将所有非 PP 父体归入 high；GENIMO 是品牌切片，可与 PP/non-PP 结果交叉展示。空标题按空字符串处理。每月整体必须与 PP + high 在 Listing 数、销量和销售额上精确回勾。
 
 ### 7.6 BSR 前 100 分析结构（每类别 × 核心 49 月）
 
-- `bsrTop100`：BSR 1-100 汇总（月度 + 年度）
+- `bsrTop100`：BSR 1-100 候选按名次、Listing 键和稳定行号确定性排序后最多取 100 条（月度 + 年度）
 - `bsrGroups`：头部（1-20）/中部（21-50）/尾部（51-100）（月度 + 年度）
 - `bsrSegments`：五档非重叠区间 1-5/6-10/11-20/21-50/51-100（月度 + 年度）。原始需求文字写作 1-5、5-10、10-20、20-50、50-100；执行时必须采用上述不重叠边界，避免 5、10、20、50 被重复计算，并在报告中说明。
 - `cohort`：按父 ASIN 统计前100的 Retained（留存）、Exited（退出）、Entered（新进入）以及头/中/尾之间的迁移数量和含义；比较周期必须明确。
 - BSR 解析：使用 Outdoor Rugs 小类的源字段 `小类BSR`，取可解析最小名次；多值标记保留。解析、去重、筛选顺序必须固定并可复跑，不得按销量重新排名。
-- BSR 前 100 的独立 Listing 数每月最多 100；对 100 名之后的商品不生成核心趋势结论、不参与头中尾或五档汇总。
+- BSR 前 100 的独立 Listing 数每月最多 100；`bsrGroups` 和 `bsrSegments` 必须直接从同一份 `bsrTop100` 月度集合切分并精确回勾；对 100 名之后的商品不生成核心趋势结论。
 - 每个类别均需输出：前 100 月度销量/销售额/均价及 MOM/环比、年度同周期 YoY、头中尾月度/年度、五档月度/年度、各层级的销量/销售额/均价变化及趋势判断。
 - BSR 前100结论必须直接引用对应周期和层级的销量、销售额、Listing 数、单 Listing 效率或均价变化，不能用没有数据支撑的泛化判断。
 
@@ -475,9 +476,10 @@ db.exec('COMMIT');
 | 路径 | 用途 |
 |---|---|
 | src/import_xlsx.js | 地垫 xlsx → market.db 导入器（全量重建） |
+| src/apply_competitor_2026.js | 将竞品库固化的 2026.01-07 父体代表行确定性重放到 market.db，并写入替换审计元数据 |
 | src/analyze_market.js | market.db → JSON/MD/HTML 分析生成器（数据全部代码生成） |
-| tests/verify.js、tests/full_audit.js、tests/overwrite_guard.js | 验证脚本（full_audit 对 2026 全年会有预期 mismatch，因月度表已被主动替换） |
-| .env | 路径配置：RAW_EXCEL_PATH=data/raw/地垫-卖家精灵市场数据.xlsx；DATABASE_URL=sqlite:///data/processed/market.db；ANALYSIS_DB_PATH=data/processed/market.db；核心 ANALYSIS_CUTOFF=202606；202607 仅作附录/参考 |
+| tests/verify.js、tests/full_audit.js、tests/competitor_audit.js、tests/analysis_audit.js、tests/overwrite_guard.js | 两阶段数据、竞品原表、分析公式/回勾和覆盖保护验收；任何预期数据源切换都必须显式分流，正式测试不得保留“预期失败” |
+| .env | 路径配置：RAW_EXCEL_PATH、DATABASE_URL、COMPETITOR_DB_PATH、ANALYSIS_DB_PATH；核心 ANALYSIS_CUTOFF=202606，202607 仅作附录/参考 |
 
 ### 8.6 部署路径
 
