@@ -318,3 +318,64 @@ db.exec('COMMIT');
 - 2026 年为竞品监控口径（64-94 商品），2025 年为全市场口径，跨年同比存在范围差异（报告已标注）
 - 2026 年商品不足 100，BSR 51-100 档数据稀疏
 - 需要 2025 年竞品快照或更大范围竞品列表才能做完全同口径跨年对比
+
+
+## 8. 数据文件路径全景（2026-08-27 全量核对）
+
+### 8.1 原始数据（data/raw/）
+
+| 文件 | 大小 | 用途 |
+|---|---|---|
+| data/raw/地垫-卖家精灵市场数据.xlsx | 42.23 MB | 主数据源：50 张月度表（2022.06-2026.07）+ 4 张 TOP 汇总；2026.03 起为子体级展开口径（见 7.3） |
+| data/raw/Competitor-US-2026.01-809631.xlsx | 1.16 MB | 竞品快照 2026.01（3000 行子体级，65 列含父ASIN） |
+| data/raw/Competitor-US-2026.02-809622.xlsx | 1.20 MB | 竞品快照 2026.02 |
+| data/raw/Competitor-US-2026.03-809620.xlsx | 1.26 MB | 竞品快照 2026.03 |
+| data/raw/Competitor-US-2026.04-809615.xlsx | 1.24 MB | 竞品快照 2026.04 |
+| data/raw/Competitor-US-2026.05-809606.xlsx | 1.27 MB | 竞品快照 2026.05 |
+| data/raw/Competitor-US-2026.06-809594.xlsx | 1.28 MB | 竞品快照 2026.06 |
+| data/raw/Competitor-US-2026.07-809440.xlsx | 1.29 MB | 竞品快照 2026.07（2026 全年数据替换来源） |
+
+> 竞品快照统一结构：单数据 sheet（Competitor-US-YYYYMM）+ Notes；每 ASIN 一行（子体级），含 父ASIN/品牌/商品标题/大类BSR/小类BSR/月销量/月销售额/价格 等 65 列。
+
+### 8.2 处理数据库（data/processed/）
+
+| 文件 | 大小 | 用途 |
+|---|---|---|
+| data/processed/market.db | 50.32 MB | 主分析库：monthly_YYYYMM × 50 + top_* × 4 + meta + sheet_catalog；2026 全年月度表已替换为竞品父ASIN去重数据 |
+| data/processed/competitor_809440.db | 24.17 MB | 竞品快照库：raw_YYYYMM（原始 3000 行）+ dedup_YYYYMM（父ASIN去重） |
+| data/processed/competitor.db | 2.35 MB | 早期竞品对比库（808036 批次，2026.07 单月，历史遗留） |
+| data/processed/market.db-shm / -wal | - | SQLite WAL 附属文件（运行时生成） |
+
+### 8.3 参考材料（新增参考的材料和内容/）
+
+| 文件 | 大小 | 内容 | 状态 |
+|---|---|---|---|
+| 新增参考的材料和内容/PP管数据-plastic-2025年-2026年.xlsx | 7.88 MB | 用户自建 PP 管分析：23 sheets（汇总含 2026.09-12 预测与 2027 预测、基础月和年度分析、只取TOP100分析、listing明细、2025.1-2026.7 月度） | 参考材料，未纳入程序管线 |
+| 新增参考的材料和内容/PP塑料户外地垫_BSR前100年度分层与2027链接规划 (1).xlsx | 0.02 MB | BSR 前100 战略分层：6 sheets（Dashboard 结论、Tier 年度分层、Monthly 前100趋势、Cohort 进退层、GENIMO 2027规划、Notes 口径） | 参考材料，未纳入程序管线 |
+| 新增参考的材料和内容/要求内容.txt | 1.2 KB | 需求原文（从项目根目录移入，内容未变） | 需求依据 |
+| 新增参考的材料和内容/新增说明情况.txt | 0 KB | 空文件（占位） | 未填写 |
+
+### 8.4 交付物（交付/）
+
+| 文件 | 大小 | 用途 |
+|---|---|---|
+| 交付/户外地垫市场分析报告-优化版.html | 409.7 KB | 最终 HTML 报告（大字版），gh-pages 线上部署即此文件（index.html） |
+| 交付/户外地垫市场分析报告-优化版.md | 229.7 KB | Markdown 版报告（同内容） |
+| 交付/户外地垫市场分析数据.json | 1495.7 KB | 全量结构化分析数据（程序中间产物） |
+| 交付/户外地垫市场分析报告.html | 32.7 KB | 早期初版报告（历史遗留） |
+| 交付/户外地垫市场分析说明稿-速览版.md | 5.7 KB | 速览说明稿 |
+
+### 8.5 程序与配置
+
+| 路径 | 用途 |
+|---|---|
+| src/import_xlsx.js | 地垫 xlsx → market.db 导入器（全量重建） |
+| src/analyze_market.js | market.db → JSON/MD/HTML 分析生成器（数据全部代码生成） |
+| tests/verify.js、tests/full_audit.js、tests/overwrite_guard.js | 验证脚本（full_audit 对 2026 全年会有预期 mismatch，因月度表已被主动替换） |
+| .env | 路径配置：RAW_EXCEL_PATH=data/raw/地垫-卖家精灵市场数据.xlsx；DATABASE_URL=sqlite:///data/processed/market.db；ANALYSIS_DB_PATH=data/processed/market.db；ANALYSIS_CUTOFF=202607 |
+
+### 8.6 部署路径
+
+- 本地交付：交付/户外地垫市场分析报告-优化版.html
+- 线上：gh-pages 分支 index.html（与本地文件 git-hash 一致）→ https://zhouchengye-0914.github.io/t5-outdoor-rug-market-analysis/
+- 部署流程：git worktree 隔离目录 → checkout --orphan gh-pages → 复制 index.html → push -f origin <sha>:refs/heads/gh-pages（推送偶发 exit=128，重试即可）
