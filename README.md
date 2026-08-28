@@ -10,7 +10,8 @@
 - **数据源**: `data/raw/地垫-卖家精灵市场数据.xlsx` (卖家精灵市场数据, 美国站, 2022.06 - 2026.07)
 - **输出**: `data/processed/market.db` (单文件 SQLite, ~48 MB)
 - **工作表口径**: Excel 界面可见 23 张；工作簿内部另有 32 张隐藏表（31 张历史月度明细 + 1 张无有效区域的遗留 `Sheet6`）
-- **规模**: 主 Excel 基础导入 73,812 条；应用 2026.01-07 竞品父体代表行后当前为 62,564 条，54 张业务表（50 月度 + 4 TOP）+ meta/sheet_catalog/analysis_replacements 元数据
+- **规模**: 主 Excel 基础导入 73,812 条；应用 2026.01-07 竞品代表行后当前为 71,451 条，54 张业务表（50 月度 + 4 TOP）+ meta/sheet_catalog/analysis_replacements 元数据
+- **2026 口径（2026-08-28 更新）**: 2026.01-06 竞品快照已替换为**全市场父体级导出**（每月 1,038-1,993 个父体，替代原 64-94 父体口径），与 2025 全市场行级口径量级一致、跨年同比可直接参考；2026.07 仍为 94 父体小口径（仅附录/参考）。竞品库由 src/build_competitor_db.js 可复跑重建（确定性首条代表行规则）
 
 > 原始需求要求“历年”分析及年度/月度 YoY、MoM，因此 31 张隐藏历史月度表属于有效数据并纳入转换。55 是工作簿内部登记总数，不是 Excel 界面可见子表数；隐藏的空白 `Sheet6` 被跳过。
 
@@ -32,6 +33,7 @@
 │   └── processed/                       # market.db + competitor_809440.db
 ├── src/
 │   ├── import_xlsx.js                   # 主 Excel 基础导入
+│   ├── build_competitor_db.js           # 竞品快照 -> competitor_809440.db（raw + dedup，可复跑）
 │   ├── apply_competitor_2026.js         # 2026.01-07 父体代表行确定性重放
 │   └── analyze_market.js                # JSON / Markdown / HTML 分析生成
 ├── sandbox/
@@ -55,7 +57,7 @@ npm install
 # 2. 运行 PoC (验证 xlsx 能读取)
 npm run poc
 
-# 3. 执行完整转换（基础 Excel 导入 + 2026.01-07 竞品父体替换）
+# 3. 执行完整转换（基础 Excel 导入 + 竞品库重建 + 2026.01-07 竞品代表行替换）
 npm run import
 
 # 4. 生成优化版结构化数据、Markdown 和独立 HTML
@@ -171,20 +173,20 @@ FAIL: 0
 
 ```
 Sheets checked: 54
-Cells checked: 3,694,439
+Cells checked: 4,261,173
 Structural issues: 0
 Value mismatches: 0
-Numeric type changes: 68,226 (informational)
+Numeric type changes: 68,194 (informational)
 ```
 
 ### 6.3 竞品源链路与分析公式验收
 
 ```text
-competitor_audit: 7 snapshots / 1,365,000 cells / 0 failures
-analysis_audit: 42 checks / 0 failures
+competitor_audit: 7 snapshots / 819,910 cells / 0 failures
+analysis_audit: 50 checks / 0 failures
 ```
 
-竞品审计逐月确认：Excel 3000 行与 `raw_YYYYMM` 零值差异、父/ASIN键覆盖完整、64/74/82/79/88/91/94 条 `dedup_YYYYMM` 均为原始表中的精确代表行。分析审计确认：Top100 每类每月不超过100、头中尾/五档精确回勾、PP+high 精确回勾整体、MOM/连续环比基准正确、核心截止 202606、202602 四个验收值复现。
+竞品审计逐月确认：源快照（2026.01-06 全市场父体级 1135/1039/2002/1745/1691/2002 行，2026.07 子体级 3000 行）与 `raw_YYYYMM` 零值差异、父/ASIN键覆盖完整、1134/1038/1766/1744/1690/1993/94 条 `dedup_YYYYMM` 均为原始表中的精确代表行（确定性首条规则，由 src/build_competitor_db.js 可复跑重建）。分析审计确认：Top100 每类每月不超过100、头中尾/五档精确回勾、PP+high 精确回勾整体、MOM/连续环比基准正确、核心截止 202606、202602 四个验收值（-14.8%/-20.5%/+9.6%/+23.8%）复现、2026.05 中部/尾部 MOM"无对应数据"披露。
 
 ### 6.4 自审修复历史
 

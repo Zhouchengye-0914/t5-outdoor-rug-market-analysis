@@ -132,9 +132,9 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
   check(category + ' Top100 cap and tier reconciliation', reconciled);
 
   const annual2026 = current.annual.find((row) => row.year === '2026');
-  check(category + ' 2026 annual period is Jan-Jun with scope warning', annual2026.period === '202601-202606'
+  check(category + ' 2026 annual period is Jan-Jun, comparable with residual-caliber note', annual2026.period === '202601-202606'
     && annual2026.comparison === '202601-202606 vs 202501-202506'
-    && annual2026.scopeComparable === false && Boolean(annual2026.scopeNote));
+    && annual2026.scopeComparable === true && Boolean(annual2026.scopeNote));
 }
 
 const overall = byMonth(data.categories.overall.monthly);
@@ -170,11 +170,15 @@ for (const [name, output] of [['Markdown', markdown], ['HTML', html]]) {
   check(name + ' discloses 2025.05 BSR duplication and no-data cells', output.includes('小类BSR同值重复') && output.includes('无对应数据'));
 }
 
+const may2026 = overall.get('202605');
+check('202605 overall uses new full-market snapshot (1690 listings)', may2026.skuCount === 1690, 'sku=' + may2026.skuCount);
+check('202601 overall uses new full-market snapshot (1134 listings)', overall.get('202601').skuCount === 1134, 'sku=' + overall.get('202601').skuCount);
+
 const benchmark = overall.get('202602');
-check('202602 overall benchmark MOM sales ≈ -27.7%', close(benchmark.momSales, -27.7, 0.1), benchmark.momSales.toFixed(3));
-check('202602 overall benchmark MOM revenue ≈ -0.1%', close(benchmark.momRevenue, -0.1, 0.1), benchmark.momRevenue.toFixed(3));
-check('202602 overall benchmark chain sales ≈ +9.3%', close(benchmark.chainSales, 9.3, 0.1), benchmark.chainSales.toFixed(3));
-check('202602 overall benchmark chain revenue ≈ +33.5%', close(benchmark.chainRevenue, 33.5, 0.1), benchmark.chainRevenue.toFixed(3));
+check('202602 overall benchmark MOM sales ≈ -14.8%', close(benchmark.momSales, -14.8, 0.1), benchmark.momSales.toFixed(3));
+check('202602 overall benchmark MOM revenue ≈ -20.5%', close(benchmark.momRevenue, -20.5, 0.1), benchmark.momRevenue.toFixed(3));
+check('202602 overall benchmark chain sales ≈ +9.6%', close(benchmark.chainSales, 9.6, 0.1), benchmark.chainSales.toFixed(3));
+check('202602 overall benchmark chain revenue ≈ +23.8%', close(benchmark.chainRevenue, 23.8, 0.1), benchmark.chainRevenue.toFixed(3));
 
 let ppSales2025 = 0;
 let ppRevenue2025 = 0;
@@ -201,8 +205,8 @@ for (const [name, output] of [['Markdown', markdown], ['HTML', html]]) {
   check(name + ' has no stale high-price classification', !output.includes('材质关键词或价格≥$40'));
   check(name + ' has no random representative wording', !output.includes('随机保留'));
   check(name + ' contains exact 90-day exit gate', output.includes('连续 90 天无法进入前100') || output.includes('连续90天无法进入前100'));
-  check(name + ' contains cross-scope warning', output.includes('2026竞品父体口径与2025全市场SKU口径不同')
-    || output.includes('2026与2025数据范围不同'));
+  check(name + ' contains new full-market caliber note', output.includes('2026.01-06 已更新为全市场父体级快照')
+    || output.includes('2026.01-06 已更新为全市场父体级快照'));
 }
 check('HTML has exactly one coverage navigation entry', (html.match(/href="#coverage"/g) || []).length === 1);
 

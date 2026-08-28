@@ -5,8 +5,9 @@
   "main": "src/import_xlsx.js",
   "scripts": {
     "import:base": "node src/import_xlsx.js",
+    "build:competitor": "node src/build_competitor_db.js",
     "apply:competitor": "node src/apply_competitor_2026.js",
-    "import": "npm run import:base && npm run apply:competitor",
+    "import": "npm run import:base && npm run build:competitor && npm run apply:competitor",
     "verify": "node tests/verify.js",
     "audit": "node tests/full_audit.js",
     "audit:competitor": "node tests/competitor_audit.js",

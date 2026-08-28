@@ -124,7 +124,10 @@ check('sheet_catalog effective/skipped = 54/1', catalogRows.filter((row) => row.
 const replacements = db.prepare('SELECT * FROM analysis_replacements ORDER BY month').all();
 check('analysis_replacements has 7 months', replacements.length === 7, 'rows=' + replacements.length);
 check('replacement months are 202601-202607', replacements.every((row) => REPLACED_MONTHS.has(row.month)));
-check('replacement raw source has 3000 rows/month', replacements.every((row) => row.source_raw_rows === 3000));
+// 2026.01-06 已更新为全市场 listing 级导出（行数随快照变化）；2026.07 仍为子体级展开（3000 行）
+const EXPECTED_RAW_ROWS = { '202601': 1135, '202602': 1039, '202603': 2002, '202604': 1745, '202605': 1691, '202606': 2002, '202607': 3000 };
+check('replacement raw source row counts match snapshots', replacements.every((row) => EXPECTED_RAW_ROWS[row.month] === row.source_raw_rows),
+  JSON.stringify(replacements.map((row) => [row.month, row.source_raw_rows])));
 check('replacement source hash is recorded', replacements.every((row) => /^[0-9a-f]{64}$/.test(row.source_sha256)));
 
 const tableNames = new Set(db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((row) => row.name));

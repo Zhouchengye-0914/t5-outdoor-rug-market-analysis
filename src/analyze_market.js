@@ -196,9 +196,9 @@ function buildAnnual(monthly) {
       yoyRevenue: comparable ? pct(comparableCurrent.revenue, prior.revenue) : null,
       yoyAvgListPrice: comparable ? pct(comparableCurrent.avgListPrice, prior.avgListPrice) : null,
       yoyWeightedPrice: comparable ? pct(comparableCurrent.weightedPrice, prior.weightedPrice) : null,
-      scopeComparable: comparable && year !== '2026',
+      scopeComparable: comparable,
       scopeNote: year === '2026'
-        ? '同月份数学同比；2026竞品父体口径与2025全市场SKU口径不同，不能解释为同范围市场增减'
+        ? '2026.01-06 已更新为全市场父体级快照（1038-1993父体/月），与2025全市场行级导出（1683-2000行/月）量级一致、可直接参考；2025为行级导出（含变体行、无ASIN列），2026为父体级导出（父ASIN去重），颗粒度与导出日期仍略有差异'
         : null,
     };
   });
@@ -238,14 +238,14 @@ function trendAnalysis(c, category, label) {
   if (groupLine) out.push(`- 头中尾分层同比：${groupLine}。`);
   if (benchmark) {
     const expected = category === 'overall'
-      ? '（整体市场验收目标约 -27.7% / -0.1% / +9.3% / +33.5%）'
+      ? '（整体市场验收目标约 -14.8% / -20.5% / +9.6% / +23.8%）'
       : '';
     out.push(`- 验收基准月 202602：MOM销量（今年 vs 去年同月）${fmtPct(benchmark.momSales)}、MOM销售额 ${fmtPct(benchmark.momRevenue)}；环比销量（vs 上月）${fmtPct(benchmark.chainSales)}、环比销售额 ${fmtPct(benchmark.chainRevenue)}${expected}。`);
   }
   if (baseline && baseline.month !== '202602') out.push(`- 核心截止月 ${baseline.month}：MOM销量（今年 vs 去年同月）${fmtPct(baseline.momSales)}、MOM销售额 ${fmtPct(baseline.momRevenue)}；环比销量（vs 上月）${fmtPct(baseline.chainSales)}、环比销售额 ${fmtPct(baseline.chainRevenue)}。`);
   if (seasonal) out.push(`- 季节性（2024-2025同月均值）：${seasonal.month}月销量最高，月均 ${fmt(seasonal.avg)} 件，建议在高峰前完成备货与广告测试。`);
   const anomaly = c.monthly.find((row) => row.month === '202604');
-  if (anomaly && baseline) out.push(`- 口径提示：2026全年已统一为竞品快照按父ASIN去重口径（每月64-94个父商品），与2025年全市场口径（每月1700-2000 SKU）不同，跨年同比存在范围差异，请以可比口径列为准。`);
+  if (anomaly && baseline) out.push(`- 口径提示：2026.01-06 已更新为全市场父体级快照（每月1038-1993个父体，替代原64-94父体口径），与2025年全市场行级口径（每月1683-2000行）量级一致，跨年同比可直接参考；2025为行级导出（含变体行、无ASIN列）、2026为父体级导出（父ASIN去重），颗粒度与导出日期仍略有差异，2026.07仍为94父体小口径（仅附录/参考）。`);
   return out.join('\n');
 }
 
@@ -548,7 +548,7 @@ function mdAnnualSegments(rows) {
 
 const labels = { overall: '整体市场', pp: 'PP塑料地垫（标题完整单词 plastic）', high: '非PP高客单产品', genimo: 'GENIMO品牌' };
 const md = ['# 户外地垫市场分析报告（优化版）', '',
-  `> 分析范围：${analysisMonths[0]}-${analysisMonths[analysisMonths.length - 1]}，共 ${analysisMonths.length} 个月（核心明细）。2026.07 仅作附录/参考（SPEC 1.2：核心结论截止 202606）；2026 全年为竞品父ASIN去重口径。`, '',
+  `> 分析范围：${analysisMonths[0]}-${analysisMonths[analysisMonths.length - 1]}，共 ${analysisMonths.length} 个月（核心明细）。2026.07 仅作附录/参考（SPEC 1.2：核心结论截止 202606）；2026.01-06 为全市场父体级快照（1038-1993父体/月），2026.07 仍为94父体小口径。`, '',
   '## 一、口径说明', '',
   '- 小类前100严格依据源字段 `小类BSR`；2026父体层级取同类候选变体中的最小可解析名次，代表行销量/销售额不重复相加；每分类每月Top100最多100条，所有分层复用同一Top100集合。',
   '- PP：标题按不区分大小写的完整单词 `plastic`（单词边界）筛选，NULL按空字符串处理；不含 `plastics` 等扩展词。2026同父体任一变体命中即将该父体归入PP。',
@@ -557,7 +557,7 @@ const md = ['# 户外地垫市场分析报告（优化版）', '',
   '- 月度MOM（用户口径）= 今年X月 vs 去年X月同月（如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月（连续月环比）；年度YOY = 年度同周期对比。',
   '- 2025.05（主表导出日 2025-06-19，该表无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部 MOM（同比2025.05）与 2025.06 中部/尾部环比显示“无对应数据”；2026.05 头部 MOM 的基准为上述异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考，不可解读为真实头部同比。GENIMO 部分月份分层无在榜商品亦显示“无对应数据”（正常稀疏，非数据错误）。',
   '- BSR头部/中部/尾部分别为1-20、21-50、51-100；五档明细为1-5、6-10、11-20、21-50、51-100，区间不重叠。',
-  '- 年度YoY使用同周期比较；2023对2022仅比较6-12月。2026.01-06对2025.01-06虽月份一致，但数据范围不同，表内明确标注，不把它解释为严格同范围市场增减。', ''];
+  '- 年度YoY使用同周期比较；2023对2022仅比较6-12月。2026.01-06 已更新为全市场父体级快照（1038-1993父体/月），与2025年全市场行级口径（1683-2000行/月）量级一致，年度同比可直接参考；2025为行级导出（含变体行、无ASIN列）、2026为父体级导出（父ASIN去重），颗粒度与导出日期仍略有差异，已随表注明。', ''];
 
 let sectionNo = 2;
 for (const category of ['overall', 'pp', 'high', 'genimo']) {
@@ -648,7 +648,7 @@ for (const fs of FORECAST_2027_SCENARIOS) {
 md.push('', '## 十一、参考材料核对', '',
   '- 两份参考 workbook（PP管数据、BSR年度分层与2027规划）已核对工作表结构、筛选公式和BSR解析规则。',
   '- PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年数据因源Excel不含ASIN列，无法进行父ASIN去重，故PP前100独立Listing数在2025年存在差异。',
-  '- 2026年数据源已切换为竞品父ASIN去重口径（64-94父商品/月），与参考 workbook 2026年PP数据（用户自建PP管分析）数据源不同，月度总量不可直接横向比较。',
+  '- 2026.01-06 已更新为全市场父体级快照（1038-1993父体/月，替代原64-94父体口径），与参考 workbook 2026年PP数据（用户自建PP管分析）数据源不同，月度总量不可直接横向比较；2026.07 仍为94父体快照。',
   '- 参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91。该核实使用参考 workbook 自身数据源（含父ASIN），市场DB 2025年无父ASIN，跨年父体进退仅对2026年首尾月有效。',
   '- 参考 workbook GENIMO 2027规划已整合进本报告第九节建议，决策门槛、尺寸角色和工艺验证方案均来自该参考。',
   '');
@@ -718,7 +718,7 @@ const coverageScopeText = `核心明细覆盖 ${analysisMonths.length} 个月（
 const anomalySectionHtml = `<section id="anomaly"><h2>六、2026.07附录/参考</h2><p class="note">${coverageScopeText} 2026.07 超出核心截止月份 202606，仅作附录/参考。2026 全年已统一为竞品父ASIN去重口径。</p>${htmlTable(['月份', '状态', '销量', '销售额($)', 'SKU平均标价', '加权成交均价'], sourceDiagnostics.filter((row) => row.month > REPORT_CUTOFF).map((row) => [row.month, '附录/参考（> ' + REPORT_CUTOFF + '）', fmt(row.sales), fmt(row.revenue), fmt(row.avgListPrice, 2), fmt(row.weightedPrice, 2)]))}</section>`;
 let htmlOutput = html
   .replace(/<div id="dashboard" class="scope-notice"><span>◎<\/span><div>[\s\S]*?<\/div><\/div>/, `<div id="dashboard" class="scope-notice"><span>◎</span><div><b>分析范围：</b>${esc(coverageScopeText)}</div></div>`)
-  .replace(/<section id="definitions">[\s\S]*?<\/section>/, `<section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>；2026父体层级取同类候选变体中的最佳可解析名次，销量/销售额仍只取固化代表行，不合计子体；每分类每月最多100条，头中尾和五档均复用该Top100集合。</li><li>PP塑料地垫：标题按不区分大小写的完整单词 <code>plastic</code>（单词边界）筛选，空标题按空字符串；2026同父体任一变体命中即归PP。</li><li>高客单非PP：排除PP父体后的全部商品（SPEC 7.5），不再叠加材质关键词或价格门槛。</li><li>均价同时给出SKU平均标价与销量加权成交均价（销售额/销量）。月度MOM（用户口径）= 今年X月 vs 去年X月同月；月度环比 = 本月 vs 上月；年度表使用同月份集合比较。2026与2025数据范围不同，报告保留范围警告。</li><li>2025.05（主表导出日 2025-06-19，无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部 MOM（同比2025.05）与 2025.06 中部/尾部环比显示"无对应数据"；2026.05 头部 MOM 的基准为异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考。GENIMO 部分月份分层无在榜商品亦显示"无对应数据"（正常稀疏）。</li></ul><p class="note">${esc(coverageScopeText)}</p></section>`)
+  .replace(/<section id="definitions">[\s\S]*?<\/section>/, `<section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>；2026父体层级取同类候选变体中的最佳可解析名次，销量/销售额仍只取固化代表行，不合计子体；每分类每月最多100条，头中尾和五档均复用该Top100集合。</li><li>PP塑料地垫：标题按不区分大小写的完整单词 <code>plastic</code>（单词边界）筛选，空标题按空字符串；2026同父体任一变体命中即归PP。</li><li>高客单非PP：排除PP父体后的全部商品（SPEC 7.5），不再叠加材质关键词或价格门槛。</li><li>均价同时给出SKU平均标价与销量加权成交均价（销售额/销量）。月度MOM（用户口径）= 今年X月 vs 去年X月同月；月度环比 = 本月 vs 上月；年度表使用同月份集合比较。2026.01-06 已更新为全市场父体级快照（1038-1993父体/月），与2025全市场行级导出（1683-2000行/月）量级一致、可直接参考；2025为行级导出（含变体行、无ASIN列），2026为父体级导出（父ASIN去重），颗粒度与导出日期仍略有差异。</li><li>2025.05（主表导出日 2025-06-19，无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部 MOM（同比2025.05）与 2025.06 中部/尾部环比显示"无对应数据"；2026.05 头部 MOM 的基准为异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考。GENIMO 部分月份分层无在榜商品亦显示"无对应数据"（正常稀疏）。</li></ul><p class="note">${esc(coverageScopeText)}</p></section>`)
   .replace(/<section id="anomaly">[\s\S]*?<\/section>/, anomalySectionHtml)
   .replace('销量、销售额、双均价 · 小类BSR前100 · 月度MoM与年度YoY', '销量、销售额、双均价 · 小类BSR Top100 · 月度YOY与MOM')
   .replace('<a href="#genimo"><span class="nav-icon">G</span>GENIMO</a>', '<a href="#genimo"><span class="nav-icon">G</span>GENIMO</a><a href="#genimo-products"><span class="nav-icon">Top</span>GENIMO主力ASIN</a>')

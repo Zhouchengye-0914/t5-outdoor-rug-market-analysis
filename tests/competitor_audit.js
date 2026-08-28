@@ -10,7 +10,7 @@ const { DatabaseSync } = require('node:sqlite');
 const ROOT = path.resolve(__dirname, '..');
 const RAW_DIR = path.resolve(ROOT, 'data/raw');
 const DB_PATH = path.resolve(ROOT, process.env.COMPETITOR_DB_PATH || 'data/processed/competitor_809440.db');
-const EXPECTED_DEDUP = { '202601': 64, '202602': 74, '202603': 82, '202604': 79, '202605': 88, '202606': 91, '202607': 94 };
+const EXPECTED_DEDUP = { '202601': 1134, '202602': 1038, '202603': 1766, '202604': 1744, '202605': 1690, '202606': 1993, '202607': 94 };
 
 if (!fs.existsSync(DB_PATH)) {
   console.error('Missing competitor DB: ' + DB_PATH);
@@ -88,7 +88,7 @@ for (const file of files) {
   const expectedRawRows = range.e.r - range.s.r;
   check(month + ' raw schema', JSON.stringify(rawColumns) === JSON.stringify(normalizedHeaders),
     `excel=${normalizedHeaders.length} db=${rawColumns.length}`);
-  check(month + ' raw row count', rawRows.length === expectedRawRows && rawRows.length === 3000,
+  check(month + ' raw row count', rawRows.length === expectedRawRows,
     `excel=${expectedRawRows} db=${rawRows.length}`);
 
   let valueMismatches = 0;
@@ -113,6 +113,7 @@ for (const file of files) {
   const groups = new Map();
   for (const row of rawRows) {
     const key = listingKey(row);
+    if (!key) continue; // 全空行（源表尾部空白行）无 Listing 键，不计入独立 Listing
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
   }
