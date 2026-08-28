@@ -503,6 +503,20 @@ md.push('', '## 九、趋势结论与GENIMO建议', '',
   '4. 根据月度MOM（今年X月 vs 去年同月）和月度环比（本月 vs 上月）在3-5月旺季前置补货和新品测试。',
   '5. 2026.07仅作附录/参考（核心结论截止202606），制定年度预算时以2026.01-06可比口径为准。',
   '6. GENIMO 2027规划见下节：1个头部锚点 + 3-5个中部利润层 + 4-8个尾部测试池，并配套尺寸角色与晋级/退出门槛。');
+md.push('', '### GENIMO 2027产品规划（来自参考 workbook，SPEC 1.3/7.7/验收22）', '',
+  '- **链接组合（Link Portfolio）**：1 个头部锚点 + 3-5 个中部利润层 + 4-8 个尾部测试池。',
+  '- **头部锚点**：BSR Top20 长期稳定款（如 5x8 与 6x9 系列），承担流量与排名锚定，持续保障库存与广告预算。',
+  '- **中部利润层**：BSR 21-50，做尺寸升级与颜色/图案差异化，贡献主要利润。',
+  '- **尾部测试池**：BSR 51-100，快速测试新工艺、新尺寸（9x18/10x20）与特殊形状（圆形/异形），只对验证通过者加量。',
+  '- **决策门槛（晋级/退出）**：',
+  '  - 尾部→中部：连续 4 周 BSR ≤ 100 且 ACOS 可控 → 转中部利润层。',
+  '  - 中部→头部：连续 6 周 BSR ≤ 50 → 评估升级为头部锚点候选。',
+  '  - 头部锚点：BSR ≤ 20 连续 8 周以上，且库存/广告投入产出达标 → 维持锚点地位。',
+  '  - 退出：BSR > 100 连续 4 周或 ACOS 持续恶化 → 降价清理或下架，回笼资金。',
+  '- **尺寸角色分工**：5x8 引流款/控制TACOS；6x9 升级款；8x10、9x12 利润核心；9x18、10x20 场景化大尺寸，仅按验证需求投产。',
+  '- **2027 决策建议**：3-5月旺季前完成头部锚点补货与中部新品上架；Q3 复盘尾部测试池，Q4 确定 2028 组合。',
+  );
+
 
 // 十、2027规划与预测 (SPEC 1.3, 7.7, 验收22)
 md.push('', '## 十、2027规划与预测（预测/假设，非历史实绩）', '',
@@ -576,7 +590,7 @@ const htmlSections = ['overall', 'pp', 'high', 'genimo'].map((category, index) =
 }).join('\n');
 
 const ppSalesShare2025 = insight.overall2025.sales ? insight.pp2025.sales / insight.overall2025.sales * 100 : null;
-const insightHtml = `<section id="insights"><h2>九、趋势结论与GENIMO建议</h2><div class="insight-grid"><article><h3>整体市场</h3><p>2025销量同比 ${fmtPct(insight.overall2025.yoySales)}，销售额同比 ${fmtPct(insight.overall2025.yoyRevenue)}；SKU平均标价同比 ${fmtPct(insight.overall2025.yoyAvgListPrice)}，加权成交均价同比 ${fmtPct(insight.overall2025.yoyWeightedPrice)}。量增快于额增，说明价格与结构承压。</p></article><article><h3>PP塑料地垫</h3><p>2025销量同比 ${fmtPct(insight.pp2025.yoySales)}、销售额同比 ${fmtPct(insight.pp2025.yoyRevenue)}；全年销量 ${fmt(insight.pp2025.sales)}，占整体销量 ${fmt(ppSalesShare2025, 1)}%，${insight.ppPeak2025.month}达到销量峰值 ${fmt(insight.ppPeak2025.sales)}。</p></article><article><h3>高客单非PP</h3><p>2025销量同比 ${fmtPct(insight.high2025.yoySales)}、销售额同比 ${fmtPct(insight.high2025.yoyRevenue)}，加权成交均价同比 ${fmtPct(insight.high2025.yoyWeightedPrice)}，需要用材质与价格带拆分寻找增长点。</p></article><article><h3>GENIMO</h3><p>2025年PP销量份额 ${fmt(insight.genimoPpShare2025, 2)}%，PP销售额份额 ${fmt(insight.genimoPpRevenueShare2025, 2)}%；品牌销量同比 ${fmtPct(insight.genimo2025.yoySales)}，增长快于大盘但仍需改善价格质量。</p></article></div><h3>行动建议</h3><ol><li>按尺寸、价格带和小类BSR管理PP产品，优先保障BSR 1-20核心SKU的库存、广告与评价资产。</li><li>同时考核销量、销售额、SKU平均标价和加权成交均价，避免以低价换规模。</li><li>高客单非PP为排除PP后全部产品（SPEC 7.5），按价格带和尺寸分段寻找增长机会。</li><li>依据月度MOM（今年X月 vs 去年同月）和月度环比（本月 vs 上月）识别3-5月旺季，在峰值前4-8周完成补货、广告和新品测试。</li><li>2026.07仅作附录/参考（核心结论截止202606），预算与目标制定以2026.01-06可比口径为准。</li></ol></section>`;
+const insightHtml = `<section id="insights"><h2>九、趋势结论与GENIMO建议</h2><div class="insight-grid"><article><h3>整体市场</h3><p>2025销量同比 ${fmtPct(insight.overall2025.yoySales)}，销售额同比 ${fmtPct(insight.overall2025.yoyRevenue)}；SKU平均标价同比 ${fmtPct(insight.overall2025.yoyAvgListPrice)}，加权成交均价同比 ${fmtPct(insight.overall2025.yoyWeightedPrice)}。量增快于额增，说明价格与结构承压。</p></article><article><h3>PP塑料地垫</h3><p>2025销量同比 ${fmtPct(insight.pp2025.yoySales)}、销售额同比 ${fmtPct(insight.pp2025.yoyRevenue)}；全年销量 ${fmt(insight.pp2025.sales)}，占整体销量 ${fmt(ppSalesShare2025, 1)}%，${insight.ppPeak2025.month}达到销量峰值 ${fmt(insight.ppPeak2025.sales)}。</p></article><article><h3>高客单非PP</h3><p>2025销量同比 ${fmtPct(insight.high2025.yoySales)}、销售额同比 ${fmtPct(insight.high2025.yoyRevenue)}，加权成交均价同比 ${fmtPct(insight.high2025.yoyWeightedPrice)}，需要用材质与价格带拆分寻找增长点。</p></article><article><h3>GENIMO</h3><p>2025年PP销量份额 ${fmt(insight.genimoPpShare2025, 2)}%，PP销售额份额 ${fmt(insight.genimoPpRevenueShare2025, 2)}%；品牌销量同比 ${fmtPct(insight.genimo2025.yoySales)}，增长快于大盘但仍需改善价格质量。</p></article></div><h3>GENIMO 2027产品规划（参考 workbook）</h3><ul><li>链接组合：1个头部锚点 + 3-5个中部利润层 + 4-8个尾部测试池。</li><li>头部锚点：BSR Top20 长期稳定款（5x8/6x9），承担流量与排名锚定。</li><li>中部利润层：BSR 21-50，尺寸升级与差异化，贡献主要利润。</li><li>尾部测试池：BSR 51-100，测试新工艺/新尺寸（9x18/10x20）与特殊形状，验证通过再加量。</li><li>决策门槛：尾部→中部=连续4周BSR≤100；中部→头部=连续6周BSR≤50；头部锚点=BSR≤20连续8周且投入产出达标；退出=BSR>100连续4周或ACOS恶化。</li><li>尺寸角色：5x8引流/控TACOS；6x9升级；8x10、9x12利润核心；9x18、10x20场景化大尺寸按需投产。</li></ul><h3>行动建议</h3><ol><li>按尺寸、价格带和小类BSR管理PP产品，优先保障BSR 1-20核心SKU的库存、广告与评价资产。</li><li>同时考核销量、销售额、SKU平均标价和加权成交均价，避免以低价换规模。</li><li>高客单非PP为排除PP后全部产品（SPEC 7.5），按价格带和尺寸分段寻找增长机会。</li><li>依据月度MOM（今年X月 vs 去年同月）和月度环比（本月 vs 上月）识别3-5月旺季，在峰值前4-8周完成补货、广告和新品测试。</li><li>2026.07仅作附录/参考（核心结论截止202606），预算与目标制定以2026.01-06可比口径为准。</li></ol></section>`;
 
 const genimoProductsHtml = `<section id="genimo-products"><h2>八、GENIMO累计Top产品</h2><p class="note">按分析范围内各月销量累计排序；用于识别主力Listing/父体。2026年数据含父ASIN，2025年数据不含ASIN（仅标题/BSR）。</p>${htmlTable(['排名', 'ASIN', '累计销量', '累计销售额($)', '覆盖月数', '最新价($)', '商品标题'], data.genimoTopProducts.map((row, index) => [index + 1, row.asin || '-', fmt(row.sales), fmt(row.revenue), row.months, fmt(row.latestPrice, 2), row.title || '-']))}</section>`;
 const cohortHtml = '<section id="cohort"><h2>七、父体进退（Cohort）</h2><p>BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月，仅2026含父ASIN数据）。</p>' + ['overall','pp','high','genimo'].map((key) => { const co = categories[key].cohort; if (!co) return ''; return '<p><b>' + labels[key] + '</b>：前100父体池从 ' + co.fromParents + ' 变为 ' + co.toParents + '；留存 ' + co.retained + '、退出 ' + co.exited + '、新进入 ' + co.entered + '。层间迁移：' + Object.entries(co.migration).map(([k, v]) => k + '=' + v).join('、') + '。</p>'; }).join('') + '<p class="note">2025年全市场口径数据不含父ASIN，无法跨年父体进退比较，跨年参考见第十一节参考材料核对。</p></section>';
