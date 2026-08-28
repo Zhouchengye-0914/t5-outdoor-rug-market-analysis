@@ -13,9 +13,10 @@
     "audit:competitor": "node tests/competitor_audit.js",
     "test:overwrite": "node tests/overwrite_guard.js",
     "test:analysis": "node src/analyze_market.js && node tests/analysis_audit.js",
-    "test": "npm run verify && npm run audit && npm run audit:competitor && npm run test:analysis && npm run test:overwrite",
+    "test": "npm run verify && npm run audit && npm run audit:competitor && npm run test:analysis && npm run test:frontend && npm run test:overwrite",
     "analyze": "node src/analyze_market.js",
-    "poc": "node sandbox/test_xlsx.js"
+    "poc": "node sandbox/test_xlsx.js",
+    "test:frontend": "node tests/frontend_audit.js"
   },
   "dependencies": {
     "xlsx": "^0.18.5",
