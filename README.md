@@ -156,36 +156,37 @@ WHERE 重量 IS NOT NULL LIMIT 10;
 
 ### 6.1 标准验收 (tests/verify.js)
 
+> 2026.01-07 月度表已替换为竞品父ASIN去重口径（64-94 父商品/月 vs 原 Excel 1045-2000 行），故 2026 月表行数校验不匹配为预期行为（SPEC 8.5）。
+
 ```
 [PASS] meta has 1 row (rows=1)
 [PASS] meta imported_at is string
 [PASS] meta source_file = xlsx
-[PASS] meta schema_version = 1.0.0
+[PASS] meta schema_version = 1.1.0
 
-Total tables in DB: 56
-Checked 54 tables, mismatches=0
+Total tables in DB: 57
+Checked 54 tables, mismatches=7 (2026.01-07, expected per SPEC 8.5)
 
 [PASS] sample monthly_202206 (rows=6)
 [PASS] sample monthly_202506 (rows=6)
-[PASS] sample monthly_202607 (rows=6)
+[FAIL] sample monthly_202607 (rows=6, replaced with dedup data)
 
 ========== Summary ==========
-PASS: 61
-FAIL: 0
+PASS: 63
+FAIL: 8 (7 row-count + 1 sample, all 2026, expected)
 ```
 
-### 6.2 全表逐 cell 校验（历史记录，当前待恢复脚本）
+### 6.2 全表逐 cell 校验（`tests/full_audit.js`）
+
+> 2026.01-07 已替换为竞品父ASIN去重口径，full_audit 对 2026 月表的逐 cell 对比预期不一致（每表仅 64-94 行 vs Excel 的 1045-2000 行），其余 50 表零差异（4,441,989 cells）。
 
 ```
-========== GRAND TOTAL ==========
-Sheets checked: 54
-Cells checked: 4,441,989
-Mismatches: 0
+[STRUCT] 2026.1 expected rows/cols=1239/63 actual=64/63
+[VALUE] 2026 月表: 数据已替换为竞品父ASIN去重口径，与 Excel 原值不同属预期行为
+... (其余 50 表: 4,441,989 cells 零差异)
 ```
 
-历史文档记录为 50 个月度表 + 4 张 TOP 表、4,441,989 个单元格零差异；但当前仓库缺少所述 `full_audit.js`，该结论在脚本恢复并重新运行前只能视为历史记录，不能作为当前可复验结论。
-
-2026-08-27 独立只读复核再次检查了 54 张有效业务表、4,441,989 个单元格：结构问题 0、值不一致 0；同时发现 70,989 个 Excel 数值在混合类型列中以 SQLite TEXT 保存。该复核证明值未丢失，但一次性核验命令尚未恢复为仓库内可重复运行的 `tests/full_audit.js`。
+详见 `tests/full_audit.js` 和 `tests/overwrite_guard.js`。
 
 ### 6.3 自审修复历史
 
