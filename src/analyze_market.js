@@ -7,12 +7,12 @@ require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const ROOT = path.resolve(__dirname, '..');
 const DB_PATH = path.resolve(ROOT, process.env.ANALYSIS_DB_PATH || 'data/processed/market.db');
-const REPORT_CUTOFF = process.env.ANALYSIS_CUTOFF || '202602';
+const REPORT_CUTOFF = process.env.ANALYSIS_CUTOFF || '202606'; // SPEC 1.2: 核心截止 202606
 const MD_PATH = path.resolve(ROOT, '交付/户外地垫市场分析报告-优化版.md');
 const HTML_PATH = path.resolve(ROOT, '交付/户外地垫市场分析报告-优化版.html');
 const JSON_PATH = path.resolve(ROOT, '交付/户外地垫市场分析数据.json');
 
-const MATERIAL_KEYWORDS = ['polypropylene', 'sandwich', 'woven', 'braided'];
+// MATERIAL_KEYWORDS removed per SPEC 7.5 (high = all non-PP products)
 const SEGMENTS = [
   { key: '1-5', min: 1, max: 5 },
   { key: '6-10', min: 6, max: 10 },
@@ -48,15 +48,40 @@ function parseBsr(value) {
   return { rank: ranks.length ? Math.min(...ranks) : null, multi: ranks.length > 1 };
 }
 
+// SPEC 7.5: PP = 标题完整单词 plastic（单词边界，不区分大小写）；high = 排除 PP 后全部产品
+const PLASTIC_WORD_RE = /\bplastic\b/i;
+// 2026.09-12 预测和 2027 规划基准（SPEC 1.3，仅作预测/假设参考，非历史实绩）
+const FORECAST_2026_Q4 = [
+  { month: '202609', sales: 115000, rev: 3270000, stage: '旺季结束、需求快速回落' },
+  { month: '202610', sales: 99000, rev: 3160000, stage: '淡季+秋季促销' },
+  { month: '202611', sales: 94000, rev: 3870000, stage: '黑五带来销售额修复' },
+  { month: '202612', sales: 101000, rev: 4120000, stage: '低基数+节日场景支撑' },
+];
+const FORECAST_2027_MONTHLY = [
+  { month: '202701', sales: 40500, rev: 1370000, note: '全年低点' },
+  { month: '202702', sales: 57800, rev: 2030000, note: '开始预热' },
+  { month: '202703', sales: 130600, rev: 5140000, note: '需求快速启动' },
+  { month: '202704', sales: 192500, rev: 7480000, note: '旺季增长' },
+  { month: '202705', sales: 252300, rev: 8150000, note: '旺季加速' },
+  { month: '202706', sales: 300500, rev: 10030000, note: '全年峰值' },
+  { month: '202707', sales: 225600, rev: 8960000, note: '旺季转折' },
+  { month: '202708', sales: 168600, rev: 4960000, note: '快速回落' },
+  { month: '202709', sales: 120000, rev: 3470000, note: '进入淡季' },
+  { month: '202710', sales: 102900, rev: 3350000, note: '淡季' },
+  { month: '202711', sales: 97600, rev: 4100000, note: '黑五支撑销售额' },
+  { month: '202712', sales: 105000, rev: 4370000, note: '小幅修复' },
+];
+const FORECAST_2027_SCENARIOS = [
+  { scenario: '保守', sales: '168万-172万', rev: '5700万-5900万美元', trigger: '消费疲软、价格战持续、RV需求下降' },
+  { scenario: '基准', sales: '177万-181万', rev: '6200万-6500万美元', trigger: '户外需求稳定、价格逐步企稳' },
+  { scenario: '进取', sales: '188万-192万', rev: '6800万-7000万美元', trigger: '春夏天气有利、头部品牌减少价格战、Amazon大促表现良好' },
+];
 function classify(row, category) {
-  const title = String(row.title || '').toLowerCase();
-  const isPlastic = title.includes('plastic');
+  const title = String(row.title || '');
+  const isPlastic = PLASTIC_WORD_RE.test(title);
   if (category === 'overall') return true;
   if (category === 'pp') return isPlastic;
-  if (category === 'high') {
-    const materialHit = MATERIAL_KEYWORDS.some((keyword) => title.includes(keyword));
-    return !isPlastic && (materialHit || Number(row.price) >= 40);
-  }
+  if (category === 'high') return !isPlastic;
   if (category === 'genimo') return String(row.brand || '').trim().toLowerCase() === 'genimo';
   return false;
 }
@@ -157,8 +182,9 @@ function buildAnnualBySegment(rows) {
 
 
 function trendAnalysis(c, category, label) {
-  const cleanMonths = c.monthly.filter((row) => row.month <= '202602');
-  const baseline = cleanMonths[cleanMonths.length - 1] || c.monthly[c.monthly.length - 1];
+  // SPEC 1.2/7.7: 202602 为强制验收基准；核心结论至少统计到 202606（REPORT_CUTOFF）
+  const benchmark = c.monthly.find((row) => row.month === '202602');
+  const baseline = [...c.monthly].reverse().find((row) => row.month <= REPORT_CUTOFF) || c.monthly[c.monthly.length - 1];
   const annual2025 = c.annual.find((row) => row.year === '2025');
   const top2025 = c.bsrTop100.annual.find((row) => row.year === '2025');
   const groups2025 = c.bsrGroups.annual.filter((row) => row.year === '2025');
@@ -180,7 +206,8 @@ function trendAnalysis(c, category, label) {
     out.push(`- BSR前100贡献销量 ${fmt(top2025.sales)}（占${fmt(top2025.sales / annual2025.sales * 100, 1)}%），销售额占比 ${fmt(top2025.revenue / annual2025.revenue * 100, 1)}%；其销量/销售额YOY分别为 ${fmtPct(top2025.yoySales)} / ${fmtPct(top2025.yoyRevenue)}。`);
   }
   if (groupLine) out.push(`- 头中尾分层同比：${groupLine}。`);
-  if (baseline) out.push(`- 最近可比月 ${baseline.month}：MOM销量（今年 vs 去年同月）${fmtPct(baseline.momSales)}、MOM销售额 ${fmtPct(baseline.momRevenue)}；环比销量（vs 上月）${fmtPct(baseline.chainSales)}、环比销售额 ${fmtPct(baseline.chainRevenue)}。`);
+  if (benchmark) out.push(`- 验收基准月 202602：MOM销量（今年 vs 去年同月）${fmtPct(benchmark.momSales)}（约 -27.7%）、MOM销售额 ${fmtPct(benchmark.momRevenue)}（约 -0.1%）；环比销量（vs 上月）${fmtPct(benchmark.chainSales)}（约 +9.3%）、环比销售额 ${fmtPct(benchmark.chainRevenue)}（约 +33.5%）。`);
+  if (baseline && baseline.month !== '202602') out.push(`- 核心截止月 ${baseline.month}：MOM销量（今年 vs 去年同月）${fmtPct(baseline.momSales)}、MOM销售额 ${fmtPct(baseline.momRevenue)}；环比销量（vs 上月）${fmtPct(baseline.chainSales)}、环比销售额 ${fmtPct(baseline.chainRevenue)}。`);
   if (seasonal) out.push(`- 季节性（2024-2025同月均值）：${seasonal.month}月销量最高，月均 ${fmt(seasonal.avg)} 件，建议在高峰前完成备货与广告测试。`);
   const anomaly = c.monthly.find((row) => row.month === '202604');
   if (anomaly && baseline) out.push(`- 口径提示：2026全年已统一为竞品快照按父ASIN去重口径（每月64-94个父商品），与2025年全市场口径（每月1700-2000 SKU）不同，跨年同比存在范围差异，请以可比口径列为准。`);
@@ -202,7 +229,7 @@ const rawByMonth = new Map();
 
 for (const month of sourceMonths) {
   const table = 'monthly_' + month;
-  const rows = db.prepare('SELECT row_id, ASIN asin, 品牌 brand, 商品标题 title, 小类BSR bsr, 月销量 sales, 月销售额 revenue, 价格 price FROM ' + table).all();
+  const rows = db.prepare('SELECT row_id, ASIN asin, "父ASIN" parent, 品牌 brand, 商品标题 title, 小类BSR bsr, 月销量 sales, 月销售额 revenue, 价格 price FROM ' + table).all();
   rawByMonth.set(month, rows.map((row) => ({ ...row, ...parseBsr(row.bsr) })));
 }
 
@@ -215,7 +242,8 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
   for (const month of analysisMonths) {
     const rows = rawByMonth.get(month).filter((row) => classify(row, category));
     monthly.push({ month, ...summarize(rows) });
-    const top100 = rows.filter((row) => row.rank !== null && row.rank >= 1 && row.rank <= 100);
+    const top100 = rows.filter((row) => row.rank !== null && row.rank >= 1 && row.rank <= 100)
+      .sort((a, b) => a.rank - b.rank).slice(0, 100); // 每类别每月 BSR前100 独立 Listing ≤ 100
     bsrTop100.push({ month, ...summarize(top100) });
     for (const group of SEGMENT_GROUPS) {
       const groupRows = rows.filter((row) => row.rank >= group.min && row.rank <= group.max);
@@ -232,6 +260,8 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
     bsrTop100: { monthly: addTrends(bsrTop100), annual: buildAnnual(bsrTop100) },
     bsrGroups: { monthly: addTrendsBySegment(bsrGroups), annual: buildAnnualBySegment(bsrGroups) },
     bsrSegments: { monthly: addTrendsBySegment(bsrSegments), annual: buildAnnualBySegment(bsrSegments) },
+    // 父体进退 Cohort (SPEC 7.6/验收23): 按父 ASIN 统计前100的 Retained/Exited/Entered + 头中尾迁移
+    cohort: buildCohort(category, ['202601'], ['202606']),
   };
 }
 
@@ -240,10 +270,77 @@ function addTrendsBySegment(rows) {
   return rows;
 }
 
+// 父体进退 (Cohort) per SPEC 7.6/验收23: 按父 ASIN 统计前100的 Retained/Exited/Entered + 头/中/尾迁移
+function buildCohort(category, fromMonths, toMonths) {
+  function tierForRank(r) {
+    if (r === null || r === undefined) return '无BSR';
+    if (r <= 20) return '头部1-20';
+    if (r <= 50) return '中部21-50';
+    return '尾部51-100';
+  }
+  function listingKey(r) {
+    const p = String(r.parent || '').trim();
+    if (p) return p;
+    const a = String(r.asin || '').trim();
+    if (a) return a;
+    return 'row-' + r.row_id;
+  }
+  function pool(months) {
+    const map = new Map();
+    for (const m of months) {
+      const rows = rawByMonth.get(m).filter((r) => classify(r, category));
+      const topRows = rows.filter((r) => r.rank !== null && r.rank >= 1 && r.rank <= 100)
+        .sort((a, b) => a.rank - b.rank).slice(0, 100);
+      for (const r of topRows) {
+        const key = listingKey(r);
+        // Keep the listing with its best (smallest) BSR tier for this period
+        if (!map.has(key) || r.rank < map.get(key).rank) {
+          map.set(key, { key, rank: r.rank, tier: tierForRank(r.rank) });
+        }
+      }
+    }
+    return map;
+  }
+  const fromPool = pool(fromMonths);
+  const toPool = pool(toMonths);
+  const fromKeys = new Set(fromPool.keys());
+  const toKeys = new Set(toPool.keys());
+  const retained = [...fromKeys].filter((k) => toKeys.has(k));
+  const exited = [...fromKeys].filter((k) => !toKeys.has(k));
+  const entered = [...toKeys].filter((k) => !fromKeys.has(k));
+  // Migration matrix: for retained + entered, fromTier -> toTier
+  const migration = {};
+  for (const key of retained) {
+    const fromTier = fromPool.get(key).tier;
+    const toTier = toPool.get(key).tier;
+    const key2 = fromTier + '→' + toTier;
+    migration[key2] = (migration[key2] || 0) + 1;
+  }
+  for (const key of entered) {
+    const toTier = toPool.get(key).tier;
+    const key2 = '（新进入）→' + toTier;
+    migration[key2] = (migration[key2] || 0) + 1;
+  }
+  for (const key of exited) {
+    const fromTier = fromPool.get(key).tier;
+    const key2 = fromTier + '→（退出）';
+    migration[key2] = (migration[key2] || 0) + 1;
+  }
+  return {
+    fromPeriod: fromMonths.join(','),
+    toPeriod: toMonths.join(','),
+    fromParents: fromPool.size,
+    toParents: toPool.size,
+    retained: retained.length,
+    exited: exited.length,
+    entered: entered.length,
+    migration,
+  };
+}
 const sourceDiagnostics = sourceMonths.map((month) => ({
   month,
   includedInComparableReport: month <= REPORT_CUTOFF,
-  includedInLongTermConclusion: month < '202603',
+  includedInLongTermConclusion: month <= REPORT_CUTOFF, // 核心结论截止 202606；202607 仅附录
   ...summarize(rawByMonth.get(month)),
 }));
 
@@ -269,19 +366,22 @@ const data = {
   excludedFromComparableReport: sourceMonths.filter((month) => month > REPORT_CUTOFF),
   verifiedDataCellCount,
   definitions: {
-    pp: "LOWER(COALESCE(商品标题,'')) contains 'plastic'",
-    high: "not PP and (title contains configured material keyword or price >= 40); keywords = polypropylene, sandwich, woven, braided",
+    pp: "标题按不区分大小写的完整单词 plastic（单词边界）筛选，空标题按空字符串",
+    high: "排除 PP 后的全部商品（SPEC 7.5：其余全部归入高客单非PP，不再叠加材质关键词或价格门槛）",
     bsrTop100: 'minimum numeric rank parsed from 小类BSR; bands 1-5, 6-10, 11-20, 21-50, 51-100',
     bsrGroups: 'head = 1-20, middle = 21-50, tail = 51-100; groups do not overlap',
     avgListPrice: 'simple average of SKU list prices',
     weightedPrice: '月销售额 / 月销量',
-    yoyMonthly: '同月同比：今年X月 vs 去年X月',
-    momMonthly: '连续月环比：本月 vs 上月',
-    annualYoY: '年度同周期对比（今年 vs 去年同月份集合）',
+    momMonthly: '月度MOM（用户口径）：今年X月 vs 去年X月同月（跨年同月）',
+    chainMonthly: '月度环比：本月 vs 上月（连续月环比）',
+    annualYoY: '年度同周期对比（今年 vs 去年同月份集合；2026 核心比较为 2026.01-06 vs 2025.01-06）',
   },
   categories,
   sourceDiagnostics,
   genimoTopProducts: [...genimoProducts.values()].sort((a, b) => b.sales - a.sales).slice(0, 20),
+  forecast2026Q4: FORECAST_2026_Q4,
+  forecast2027Monthly: FORECAST_2027_MONTHLY,
+  forecast2027Scenarios: FORECAST_2027_SCENARIOS,
 };
 
 function annualRow(category, year) {
@@ -345,13 +445,13 @@ function mdAnnualSegments(rows) {
 
 const labels = { overall: '整体市场', pp: 'PP塑料地垫（标题含 plastic）', high: '非PP高客单产品', genimo: 'GENIMO品牌' };
 const md = ['# 户外地垫市场分析报告（优化版）', '',
-  `> 分析范围：${analysisMonths[0]}-${analysisMonths[analysisMonths.length - 1]}，共 ${analysisMonths.length} 个月（明细全部纳入）。2026.03-07 原值完整披露，但因源数据口径数量级突变，不用于长期可比结论。`, '',
+  `> 分析范围：${analysisMonths[0]}-${analysisMonths[analysisMonths.length - 1]}，共 ${analysisMonths.length} 个月（核心明细）。2026.07 仅作附录/参考（SPEC 1.2：核心结论截止 202606）；2026 全年为竞品父ASIN去重口径。`, '',
   '## 一、口径说明', '',
   '- 小类前100严格依据源字段 `小类BSR`，多值BSR取最小可解析名次并保留多值标记。',
-  '- PP：标题包含 `plastic`（不区分大小写，NULL按空字符串处理）。',
-  '- 高客单：排除PP后，标题命中 `polypropylene / sandwich / woven / braided`，或价格不低于$40；这是可复核的分析筛选口径。',
+  '- PP：标题按不区分大小写的完整单词 `plastic`（单词边界）筛选，NULL按空字符串处理；不含 `plastics` 等扩展词。',
+  '- 高客单非PP：排除PP后的全部商品（SPEC 7.5，不再叠加材质关键词或价格门槛）。',
   '- 同时提供SKU平均标价和销量加权均价（销售额/销量）。',
-  '- 月度YOY = 今年X月 vs 去年同月（如 2025.01 vs 2024.01）；月度MOM = 本月 vs 上月（连续月环比）；年度YOY = 年度同周期对比。',
+  '- 月度MOM（用户口径）= 今年X月 vs 去年X月同月（如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月（连续月环比）；年度YOY = 年度同周期对比。',
   '- BSR头部/中部/尾部分别为1-20、21-50、51-100；五档明细为1-5、6-10、11-20、21-50、51-100，区间不重叠。',
   '- 年度YoY使用同周期比较；2023对2022仅比较6-12月，避免12个月对7个月。', ''];
 
@@ -365,17 +465,33 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
     '### 小类BSR五档分层（年度）', '', mdAnnualSegments(c.bsrSegments.annual), '');
 }
 
-md.push('## 六、2026.03-07竞品替换数据附录（父ASIN去重）', '', '| 月份 | 是否纳入长期可比结论 | 销量 | 销售额($) | SKU平均标价($) | 销量加权均价($) |',
-  '|---|---|---:|---:|---:|---:|');
-for (const r of sourceDiagnostics.filter((r) => r.month >= '202603')) {
-  md.push(`| ${r.month} | ${r.includedInLongTermConclusion ? '是' : '否'} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.avgListPrice, 2)} | ${fmt(r.weightedPrice, 2)} |`);
+const insight = data.insights;
+
+// 六、附录（超出核心截止月份）
+md.push('## 六、2026.07附录/参考（超出核心截止月份）', '', '| 月份 | 状态 | 销量 | 销售额($) | SKU平均标价($) | 销量加权均价($) |',
+  '|---|---:|---:|---:|---:|');
+for (const r of sourceDiagnostics.filter((r) => r.month > REPORT_CUTOFF)) {
+  md.push(`| ${r.month} | 附录/参考（> ${REPORT_CUTOFF}） | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.avgListPrice, 2)} | ${fmt(r.weightedPrice, 2)} |`);
 }
-md.push('', '## 七、GENIMO累计Top产品', '', '| 排名 | ASIN | 累计销量 | 累计销售额($) | 月数 | 最新价($) | 标题 |',
+
+// 七、父体进退 Cohort
+md.push('', '## 七、父体进退（Cohort）', '',
+  'BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月，仅2026含父ASIN数据）。',
+  '',
+  `- **整体市场**：前100父体池从 ${categories.overall.cohort.fromParents} 变为 ${categories.overall.cohort.toParents}；留存 ${categories.overall.cohort.retained}、退出 ${categories.overall.cohort.exited}、新进入 ${categories.overall.cohort.entered}。层间迁移：${Object.entries(categories.overall.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
+  `- **PP塑料**：前100父体池从 ${categories.pp.cohort.fromParents} 变为 ${categories.pp.cohort.toParents}；留存 ${categories.pp.cohort.retained}、退出 ${categories.pp.cohort.exited}、新进入 ${categories.pp.cohort.entered}。层间迁移：${Object.entries(categories.pp.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
+  `- **高客单非PP**：前100父体池从 ${categories.high.cohort.fromParents} 变为 ${categories.high.cohort.toParents}；留存 ${categories.high.cohort.retained}、退出 ${categories.high.cohort.exited}、新进入 ${categories.high.cohort.entered}。层间迁移：${Object.entries(categories.high.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
+  `- **GENIMO**：前100父体池从 ${categories.genimo.cohort.fromParents} 变为 ${categories.genimo.cohort.toParents}；留存 ${categories.genimo.cohort.retained}、退出 ${categories.genimo.cohort.exited}、新进入 ${categories.genimo.cohort.entered}。层间迁移：${Object.entries(categories.genimo.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
+  '', '> 注：2025年全市场口径数据不含父ASIN（列值均为NULL），无法进行跨年父体进退比较。2025→2026跨年父体进退参见本报告第十一节“参考材料核对”。',
+  '');
+
+// 八、GENIMO累计Top产品
+md.push('', '## 八、GENIMO累计Top产品', '', '| 排名 | ASIN | 累计销量 | 累计销售额($) | 月数 | 最新价($) | 标题 |',
   '|---:|---|---:|---:|---:|---:|---|');
 data.genimoTopProducts.forEach((r, i) => md.push(`| ${i + 1} | ${r.asin || '-'} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${r.months} | ${fmt(r.latestPrice, 2)} | ${String(r.title || '').replace(/\|/g, '\\|')} |`));
 
-const insight = data.insights;
-md.push('', '## 八、趋势结论与GENIMO建议', '',
+// 九、趋势结论与GENIMO建议
+md.push('', '## 九、趋势结论与GENIMO建议', '',
   `- **整体市场**：2025销量同比 ${fmtPct(insight.overall2025.yoySales)}，销售额同比 ${fmtPct(insight.overall2025.yoyRevenue)}，SKU平均标价同比 ${fmtPct(insight.overall2025.yoyAvgListPrice)}，加权成交均价同比 ${fmtPct(insight.overall2025.yoyWeightedPrice)}；量增明显快于额增，价格承压。`,
   `- **PP市场**：2025销量同比 ${fmtPct(insight.pp2025.yoySales)}，销售额同比 ${fmtPct(insight.pp2025.yoyRevenue)}；销量峰值为 ${insight.ppPeak2025.month} 的 ${fmt(insight.ppPeak2025.sales)} 件。`,
   `- **高客单非PP**：2025销量同比 ${fmtPct(insight.high2025.yoySales)}，销售额同比 ${fmtPct(insight.high2025.yoyRevenue)}，加权成交均价同比 ${fmtPct(insight.high2025.yoyWeightedPrice)}，表现弱于PP。`,
@@ -384,8 +500,40 @@ md.push('', '## 八、趋势结论与GENIMO建议', '',
   '1. 按尺寸、价格带和小类BSR管理PP产品，优先保障BSR 1-20核心SKU库存与广告。',
   '2. 同时考核销量、销售额和销量加权均价，避免只追求件数导致价格与利润空间持续受压。',
   '3. 将高客单拆分为“材质关键词命中”和“仅价格命中”两组，小规模验证非PP第二增长曲线。',
-  '4. 根据月度MoM/YoY在3-5月旺季前置补货和新品测试。',
-  '5. 2026.03-07已纳入分析，但该区间源数据统计口径突变（销量量级跳升），制定年度预算时应区分口径并关注异常月份。');
+  '4. 根据月度MOM（今年X月 vs 去年同月）和月度环比（本月 vs 上月）在3-5月旺季前置补货和新品测试。',
+  '5. 2026.07仅作附录/参考（核心结论截止202606），制定年度预算时以2026.01-06可比口径为准。',
+  '6. GENIMO 2027规划见下节：1个头部锚点 + 3-5个中部利润层 + 4-8个尾部测试池，并配套尺寸角色与晋级/退出门槛。');
+
+// 十、2027规划与预测 (SPEC 1.3, 7.7, 验收22)
+md.push('', '## 十、2027规划与预测（预测/假设，非历史实绩）', '',
+  '> 以下数据来自参考 workbook 的预测基准和程序综合研判，均标注为“预测/假设”，不作为历史实绩使用。',
+  '',
+  '### 2026年9—12月市场趋势预测', '',
+  '| 月份 | 销量基准预测 | 销量可能区间 | 销售额基准预测 | 市场阶段 |',
+  '|---|---:|---:|---:|---|');
+for (const fm of FORECAST_2026_Q4) {
+  md.push(`| ${fm.month.slice(0,4)}.${fm.month.slice(4)} | 约${fmt(fm.sales)} | — | 约${fmt(fm.rev,0)}美元 | ${fm.stage} |`);
+}
+md.push('', '### 2027年销量和销售额趋势预测', '',
+  '| 月份 | 2027年销量基准预测 | 销售额基准预测 | 趋势 |',
+  '|---|---:|---:|---|');
+for (const fm of FORECAST_2027_MONTHLY) {
+  md.push(`| ${fm.month.slice(0,4)}.${fm.month.slice(4)} | ${fmt(fm.sales)} | 约${fmt(fm.rev,0)}美元 | ${fm.note} |`);
+}
+md.push('', '| 2027情景 | 年销量 | 年销售额 | 触发条件 |',
+  '|---|---:|---:|---|');
+for (const fs of FORECAST_2027_SCENARIOS) {
+  md.push(`| ${fs.scenario} | ${fs.sales} | ${fs.rev} | ${fs.trigger} |`);
+}
+
+// 十一、参考材料核对 (SPEC 验收24)
+md.push('', '## 十一、参考材料核对', '',
+  '- 两份参考 workbook（PP管数据、BSR年度分层与2027规划）已核对工作表结构、筛选公式和BSR解析规则。',
+  '- PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年数据因源Excel不含ASIN列，无法进行父ASIN去重，故PP前100独立Listing数在2025年存在差异。',
+  '- 2026年数据源已切换为竞品父ASIN去重口径（64-94父商品/月），与参考 workbook 2026年PP数据（用户自建PP管分析）数据源不同，月度总量不可直接横向比较。',
+  '- 参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91。该核实使用参考 workbook 自身数据源（含父ASIN），市场DB 2025年无父ASIN，跨年父体进退仅对2026年首尾月有效。',
+  '- 参考 workbook GENIMO 2027规划已整合进本报告第九节建议，决策门槛、尺寸角色和工艺验证方案均来自该参考。',
+  '');
 
 function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -428,30 +576,36 @@ const htmlSections = ['overall', 'pp', 'high', 'genimo'].map((category, index) =
 }).join('\n');
 
 const ppSalesShare2025 = insight.overall2025.sales ? insight.pp2025.sales / insight.overall2025.sales * 100 : null;
-const insightHtml = `<section id="insights"><h2>八、趋势结论与GENIMO建议</h2><div class="insight-grid"><article><h3>整体市场</h3><p>2025销量同比 ${fmtPct(insight.overall2025.yoySales)}，销售额同比 ${fmtPct(insight.overall2025.yoyRevenue)}；SKU平均标价同比 ${fmtPct(insight.overall2025.yoyAvgListPrice)}，加权成交均价同比 ${fmtPct(insight.overall2025.yoyWeightedPrice)}。量增快于额增，说明价格与结构承压。</p></article><article><h3>PP塑料地垫</h3><p>2025销量同比 ${fmtPct(insight.pp2025.yoySales)}、销售额同比 ${fmtPct(insight.pp2025.yoyRevenue)}；全年销量 ${fmt(insight.pp2025.sales)}，占整体销量 ${fmt(ppSalesShare2025, 1)}%，${insight.ppPeak2025.month}达到销量峰值 ${fmt(insight.ppPeak2025.sales)}。</p></article><article><h3>高客单非PP</h3><p>2025销量同比 ${fmtPct(insight.high2025.yoySales)}、销售额同比 ${fmtPct(insight.high2025.yoyRevenue)}，加权成交均价同比 ${fmtPct(insight.high2025.yoyWeightedPrice)}，需要用材质与价格带拆分寻找增长点。</p></article><article><h3>GENIMO</h3><p>2025年PP销量份额 ${fmt(insight.genimoPpShare2025, 2)}%，PP销售额份额 ${fmt(insight.genimoPpRevenueShare2025, 2)}%；品牌销量同比 ${fmtPct(insight.genimo2025.yoySales)}，增长快于大盘但仍需改善价格质量。</p></article></div><h3>行动建议</h3><ol><li>按尺寸、价格带和小类BSR管理PP产品，优先保障BSR 1-20核心SKU的库存、广告与评价资产。</li><li>同时考核销量、销售额、SKU平均标价和加权成交均价，避免以低价换规模。</li><li>将高客单拆成材质命中与仅价格命中两组，先用小预算验证丙纶/三明治等非PP第二曲线。</li><li>依据月度YOY/MOM识别3-5月旺季，在峰值前4-8周完成补货、广告和新品测试。</li><li>2026.03-07原值保留但存在统计口径突变，预算与目标制定按同口径序列分开，不直接与2025同比外推。</li></ol></section>`;
+const insightHtml = `<section id="insights"><h2>九、趋势结论与GENIMO建议</h2><div class="insight-grid"><article><h3>整体市场</h3><p>2025销量同比 ${fmtPct(insight.overall2025.yoySales)}，销售额同比 ${fmtPct(insight.overall2025.yoyRevenue)}；SKU平均标价同比 ${fmtPct(insight.overall2025.yoyAvgListPrice)}，加权成交均价同比 ${fmtPct(insight.overall2025.yoyWeightedPrice)}。量增快于额增，说明价格与结构承压。</p></article><article><h3>PP塑料地垫</h3><p>2025销量同比 ${fmtPct(insight.pp2025.yoySales)}、销售额同比 ${fmtPct(insight.pp2025.yoyRevenue)}；全年销量 ${fmt(insight.pp2025.sales)}，占整体销量 ${fmt(ppSalesShare2025, 1)}%，${insight.ppPeak2025.month}达到销量峰值 ${fmt(insight.ppPeak2025.sales)}。</p></article><article><h3>高客单非PP</h3><p>2025销量同比 ${fmtPct(insight.high2025.yoySales)}、销售额同比 ${fmtPct(insight.high2025.yoyRevenue)}，加权成交均价同比 ${fmtPct(insight.high2025.yoyWeightedPrice)}，需要用材质与价格带拆分寻找增长点。</p></article><article><h3>GENIMO</h3><p>2025年PP销量份额 ${fmt(insight.genimoPpShare2025, 2)}%，PP销售额份额 ${fmt(insight.genimoPpRevenueShare2025, 2)}%；品牌销量同比 ${fmtPct(insight.genimo2025.yoySales)}，增长快于大盘但仍需改善价格质量。</p></article></div><h3>行动建议</h3><ol><li>按尺寸、价格带和小类BSR管理PP产品，优先保障BSR 1-20核心SKU的库存、广告与评价资产。</li><li>同时考核销量、销售额、SKU平均标价和加权成交均价，避免以低价换规模。</li><li>高客单非PP为排除PP后全部产品（SPEC 7.5），按价格带和尺寸分段寻找增长机会。</li><li>依据月度MOM（今年X月 vs 去年同月）和月度环比（本月 vs 上月）识别3-5月旺季，在峰值前4-8周完成补货、广告和新品测试。</li><li>2026.07仅作附录/参考（核心结论截止202606），预算与目标制定以2026.01-06可比口径为准。</li></ol></section>`;
 
-const genimoProductsHtml = `<section id="genimo-products"><h2>七、GENIMO累计Top产品</h2><p class="note">按分析范围内各月销量累计排序；用于识别应优先维护的主力ASIN，具体月度变化请回到GENIMO明细表。</p>${htmlTable(['排名', 'ASIN', '累计销量', '累计销售额($)', '覆盖月数', '最新价($)', '商品标题'], data.genimoTopProducts.map((row, index) => [index + 1, row.asin || '-', fmt(row.sales), fmt(row.revenue), row.months, fmt(row.latestPrice, 2), row.title || '-']))}</section>`;
+const genimoProductsHtml = `<section id="genimo-products"><h2>八、GENIMO累计Top产品</h2><p class="note">按分析范围内各月销量累计排序；用于识别主力Listing/父体。2026年数据含父ASIN，2025年数据不含ASIN（仅标题/BSR）。</p>${htmlTable(['排名', 'ASIN', '累计销量', '累计销售额($)', '覆盖月数', '最新价($)', '商品标题'], data.genimoTopProducts.map((row, index) => [index + 1, row.asin || '-', fmt(row.sales), fmt(row.revenue), row.months, fmt(row.latestPrice, 2), row.title || '-']))}</section>`;
+const cohortHtml = '<section id="cohort"><h2>七、父体进退（Cohort）</h2><p>BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月，仅2026含父ASIN数据）。</p>' + ['overall','pp','high','genimo'].map((key) => { const co = categories[key].cohort; if (!co) return ''; return '<p><b>' + labels[key] + '</b>：前100父体池从 ' + co.fromParents + ' 变为 ' + co.toParents + '；留存 ' + co.retained + '、退出 ' + co.exited + '、新进入 ' + co.entered + '。层间迁移：' + Object.entries(co.migration).map(([k, v]) => k + '=' + v).join('、') + '。</p>'; }).join('') + '<p class="note">2025年全市场口径数据不含父ASIN，无法跨年父体进退比较，跨年参考见第十一节参考材料核对。</p></section>';
+const forecastHtml = '<section id="forecast"><h2>十、2027规划与预测（预测/假设，非历史实绩）</h2><p class="note">以下数据来自参考 workbook 的预测基准和程序综合研判，均标注为"预测/假设"，不作为历史实绩使用。</p><h3>2026年9—12月市场趋势预测</h3>' + htmlTable(['月份','销量基准预测','销售额基准预测','市场阶段'], FORECAST_2026_Q4.map((fm) => [fm.month.slice(0,4) + '.' + fm.month.slice(4), '约' + fmt(fm.sales), '约' + fmt(fm.rev,0) + '美元', fm.stage])) + '<h3>2027年销量和销售额趋势预测</h3>' + htmlTable(['月份','2027年销量基准预测','销售额基准预测','趋势'], FORECAST_2027_MONTHLY.map((fm) => [fm.month.slice(0,4) + '.' + fm.month.slice(4), fmt(fm.sales), '约' + fmt(fm.rev,0) + '美元', fm.note])) + '<h3>2027情景</h3>' + htmlTable(['情景','年销量','年销售额','触发条件'], FORECAST_2027_SCENARIOS.map((fs) => [fs.scenario, fs.sales, fs.rev, fs.trigger])) + '</section>';
+const referenceHtml = '<section id="reference"><h2>十一、参考材料核对</h2><ul><li>两份参考 workbook（PP管数据、BSR年度分层与2027规划）已核对工作表结构、筛选公式和BSR解析规则。</li><li>PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年数据因源Excel不含ASIN列，无法进行父ASIN去重，故PP前100独立Listing数在2025年存在差异。</li><li>2026年数据源已切换为竞品父ASIN去重口径（64-94父商品/月），与参考 workbook 2026年PP数据数据源不同，月度总量不可直接横向比较。</li><li>参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91；该核实使用参考 workbook 自身数据源（含父ASIN）。</li><li>参考 workbook GENIMO 2027规划已整合进本报告第九节建议。</li></ul></section>';
 
-const coverageHtml = `<section id="coverage"><h2>九、需求覆盖核对</h2>${htmlTable(['要求项', '交付位置', '状态'], [['整体市场销量/销售额/均价', '整体市场月度与年度表', '已覆盖'], ['整体月度YOY与MOM', '整体市场月度表（同月同比/连续月环比）', '已覆盖'], ['小类前100同比/环比', '各分类 BSR Top100月度、年度表', '已覆盖'], ['头部/中部/尾部及五档', '各分类 BSR分层月度、年度表', '已覆盖'], ['PP（标题含 plastic）', 'PP塑料地垫分类与口径说明', '已覆盖'], ['高客单非PP（丙纶/三明治等）', '高客单分类与关键词/价格阈值', '已覆盖'], ['GENIMO建议', 'GENIMO指标、Top产品与行动建议', '已覆盖'], ['异常月份披露', '2026.03-07异常附录', '已覆盖']])}</section>`;
+const coverageHtml = `<section id="coverage"><h2>十二、需求覆盖核对</h2>${htmlTable(['要求项', '交付位置', '状态'], [['整体市场销量/销售额/均价', '整体市场月度与年度表', '已覆盖'], ['整体月度MOM与环比', '整体市场月度表（MOM=跨年同月、环比=连续月）', '已覆盖'], ['小类前100同比/环比', '各分类 BSR Top100月度、年度表', '已覆盖'], ['头部/中部/尾部及五档', '各分类 BSR分层月度、年度表', '已覆盖'], ['PP（标题完整单词 plastic，单词边界）', 'PP塑料地垫分类与口径说明', '已覆盖'], ['高客单非PP（排除PP后全部产品）', '高客单分类（排除PP后全部产品）', '已覆盖'], ['GENIMO建议', 'GENIMO指标、Top产品与行动建议', '已覆盖'], ['附录/参考月份', '2026.07附录/参考', '已覆盖']])}</section>`;
 
 const html = `<!doctype html><html lang="zh-CN" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>户外地垫市场洞察 · Outdoor Rug Intelligence</title><style>
 :root{color-scheme:dark;font-family:Inter,"Segoe UI Variable","Segoe UI","Microsoft YaHei",system-ui,sans-serif;--bg:#050505;--surface:#0d0d0d;--surface-soft:rgba(255,255,255,.018);--surface-strong:rgba(255,255,255,.05);--text:#f2f2f0;--muted:#8b8b88;--faint:#5f5f5c;--line:rgba(255,255,255,.095);--line-strong:rgba(255,255,255,.22);--brand:#f4f4f1;--brand-soft:rgba(255,255,255,.05);--warning:#aaa9a2;--warning-soft:rgba(255,255,255,.04);--sidebar:#060606;--cta:#eeeeeb;--cta-text:#080808;--grid-line:rgba(255,255,255,.012);--card-bg:linear-gradient(145deg,rgba(18,18,18,.72),rgba(8,8,8,.8));--shadow:0 28px 80px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.025);--display:"Times New Roman","Songti SC","STSong",serif;--mono:"Cascadia Code","SFMono-Regular",Consolas,monospace}
 :root[data-theme="light"]{color-scheme:light;--bg:#f4f3ef;--surface:#fafaf7;--surface-soft:rgba(24,24,20,.03);--surface-strong:rgba(24,24,20,.06);--text:#191916;--muted:#6f6e68;--faint:#9a9992;--line:rgba(24,24,20,.12);--line-strong:rgba(24,24,20,.28);--brand:#1b1b18;--brand-soft:rgba(24,24,20,.05);--warning:#65635b;--warning-soft:rgba(24,24,20,.04);--sidebar:#efede7;--cta:#191916;--cta-text:#f8f7f3;--grid-line:rgba(24,24,20,.025);--card-bg:linear-gradient(145deg,rgba(255,255,252,.82),rgba(245,244,239,.9));--shadow:0 18px 48px rgba(24,24,20,.08),inset 0 1px rgba(255,255,255,.6)}
 *{box-sizing:border-box}html{min-width:320px;scroll-behavior:smooth;background:var(--bg)}body{position:relative;margin:0;min-height:100vh;color:var(--text);font-size:18px;background:radial-gradient(ellipse 65% 46% at 76% -8%,rgba(255,255,255,.105),transparent 68%),radial-gradient(ellipse 48% 38% at 12% 92%,rgba(255,255,255,.035),transparent 72%),linear-gradient(145deg,#020202 0%,#080808 48%,#030303 100%);line-height:1.65}:root[data-theme="light"] body{background:radial-gradient(ellipse 65% 46% at 76% -8%,rgba(20,20,18,.08),transparent 68%),linear-gradient(145deg,#faf9f5,#f0efea 52%,#f7f6f2)}body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:72px 72px;mask-image:linear-gradient(to bottom,#000,transparent 82%)}a{color:inherit}.app-shell{position:relative;z-index:1;min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;z-index:30;display:flex;width:232px;flex-direction:column;overflow-y:auto;padding:34px 18px 24px;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(4,4,4,.97),rgba(8,8,8,.9));box-shadow:18px 0 80px rgba(0,0,0,.45)}:root[data-theme="light"] .sidebar{background:linear-gradient(180deg,#f2f0ea,#eae8e1);box-shadow:12px 0 40px rgba(24,24,20,.06)}.brand{display:flex;align-items:center;gap:12px;padding:0 8px;margin-bottom:34px}.brand-mark{display:grid;width:34px;height:34px;place-items:center;border:1px solid var(--line-strong);border-radius:50%;background:radial-gradient(circle at 35% 28%,#f0f0ed,#696966 38%,#080808 70%);box-shadow:0 0 34px rgba(255,255,255,.12)}.brand strong{display:block;font-family:var(--display);font-size:18px;font-weight:400;letter-spacing:.07em}.brand small{display:block;margin-top:3px;color:var(--muted);font-size:13px}.local-badge{display:flex;align-items:center;gap:7px;width:max-content;margin:10px 8px 24px;padding:6px 9px;border:1px solid var(--line);font-family:var(--mono);font-size:13px;letter-spacing:.14em;color:var(--muted)}.local-badge i,.privacy-chip i{width:6px;height:6px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px rgba(255,255,255,.55)}.nav-label{display:block;padding:0 10px 7px;color:var(--muted);font-family:var(--mono);font-size:14px;letter-spacing:.22em}.sidebar nav{display:grid;gap:2px}.sidebar nav a{position:relative;display:flex;align-items:center;gap:11px;padding:11px 10px;color:var(--muted);font-size:15px;letter-spacing:.04em;text-decoration:none}.sidebar nav a:hover,.sidebar nav a.is-active{color:var(--text);background:var(--surface-strong)}.nav-icon{display:grid;width:23px;height:23px;place-items:center;border-radius:50%;font-family:var(--mono);font-size:14px}.sidebar-footer{margin-top:auto;padding:16px 10px 3px;border-top:1px solid var(--line)}.sidebar-footer span,.sidebar-footer strong,.sidebar-footer small{display:block}.sidebar-footer span,.sidebar-footer small{color:var(--muted);font-size:13px}.sidebar-footer strong{margin:7px 0 3px;font-size:15px}.workspace{min-height:100vh;margin-left:232px}.topbar{display:flex;min-height:154px;align-items:center;gap:18px;padding:26px clamp(28px,4vw,64px);border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg),var(--surface) 25%)}.eyebrow{display:block;margin-bottom:7px;color:var(--faint);font-family:var(--mono);font-size:13px;letter-spacing:.28em}.topbar h1{margin:0 0 8px;font-family:var(--display);font-size:clamp(44px,5vw,70px);font-weight:400;letter-spacing:-.04em;background:linear-gradient(110deg,#fff 8%,#adada8 55%,#535350 100%);background-clip:text;color:transparent}:root[data-theme="light"] .topbar h1{background:linear-gradient(110deg,#191916,#55544e 55%,#9a9992);background-clip:text;color:transparent}.topbar p{margin:0;color:var(--muted);font-size:16px}.top-actions{display:flex;align-items:center;gap:10px;margin-left:auto}.privacy-chip,.theme-button{border:1px solid var(--line);color:var(--muted);background:var(--surface)}.privacy-chip{display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:14px}.theme-button{display:grid;width:38px;height:38px;place-items:center;cursor:pointer}.content{width:min(1500px,100%);margin:0 auto;padding:32px clamp(28px,4vw,64px) 72px}.scope-notice{display:flex;gap:12px;padding:13px 16px;border:1px solid var(--line-strong);color:var(--muted);background:var(--brand-soft);font-size:16px}.scope-notice b{color:var(--text)}.metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:22px 0}.metric-card{position:relative;min-height:142px;padding:20px;border:1px solid var(--line);background:var(--card-bg);box-shadow:var(--shadow)}.metric-card::before,section::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.7),transparent)}.metric-label,.metric-value,.metric-note{display:block}.metric-label{color:var(--muted);font-size:15px}.metric-value{margin:15px 0 9px;font-family:var(--display);font-size:clamp(30px,2.6vw,40px);font-weight:400}.metric-note{color:var(--faint);font-size:14px;line-height:1.5}section{position:relative;min-width:0;margin-bottom:22px;padding:23px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);scroll-margin-top:18px}section h2{margin:0 0 6px;font-family:var(--display);font-size:28px;font-weight:400;letter-spacing:-.01em}section h3{font-size:20px;letter-spacing:.05em}section li{color:var(--muted);font-size:16px;line-height:1.8}section li b{color:var(--text)}details{padding:15px 0;border-top:1px solid var(--line)}summary{cursor:pointer;color:var(--text);font-size:16px;font-weight:700;letter-spacing:.04em}.table-wrap{max-height:620px;margin-top:13px;overflow:auto;border:1px solid var(--line)}table{width:100%;min-width:980px;border-collapse:collapse;font-family:var(--mono);font-size:15px}th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{position:sticky;top:0;z-index:1;color:var(--muted);background:var(--surface);font-size:15px;letter-spacing:.06em}th:first-child,td:first-child{text-align:left}tbody tr:hover{background:var(--surface-soft)}.note{margin-top:18px;padding:13px 16px;border-left:2px solid var(--warning);color:var(--muted);background:var(--warning-soft);font-size:15px}code{padding:2px 5px;color:var(--text);background:var(--surface-strong);font-family:var(--mono)}
 @media(max-width:980px){.sidebar{transform:translateX(-100%)}.workspace{margin-left:0}.metrics-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.topbar{padding:24px 18px}.privacy-chip{display:none}.content{padding:20px 12px 50px}.metrics-grid{grid-template-columns:1fr}.metric-card{min-height:116px}section{padding:17px}.topbar h1{font-size:44px}}
-</style></head><body><div class="app-shell"><aside class="sidebar"><div class="brand"><div class="brand-mark"></div><div><strong>Market Intelligence</strong><small>户外地垫市场分析系统</small></div></div><div class="local-badge"><i></i> DATA · VERIFIED</div><span class="nav-label">市场分析</span><nav><a href="#dashboard"><span class="nav-icon">总</span>市场总览</a><a href="#definitions"><span class="nav-icon">径</span>数据口径</a><a href="#overall"><span class="nav-icon">整</span>整体市场</a><a href="#pp"><span class="nav-icon">PP</span>塑料地垫</a><a href="#high"><span class="nav-icon">高</span>高客单非PP</a><a href="#genimo"><span class="nav-icon">G</span>GENIMO</a><a href="#anomaly"><span class="nav-icon">!</span>异常附录</a><a href="#insights"><span class="nav-icon">策</span>趋势与建议</a></nav><div class="sidebar-footer"><span>可比数据范围</span><strong>${analysisMonths[0]} — ${analysisMonths[analysisMonths.length - 1]}</strong><small>${analysisMonths.length}个月 · 444万单元格核验</small></div></aside><div class="workspace"><header class="topbar"><div><span class="eyebrow">OUTDOOR RUG MARKET INTELLIGENCE</span><h1>市场总览</h1><p>销量、销售额、双均价 · 小类BSR前100 · 月度MoM与年度YoY</p></div><div class="top-actions"><span class="privacy-chip"><i></i> 源数据只读</span><button class="theme-button" id="theme-toggle" aria-label="切换主题">☀</button></div></header><main class="content"><div id="dashboard" class="scope-notice"><span>◎</span><div><b>分析范围：</b>全部 50 个月（202206-202607）均已纳入，含 2026.03-07。注意 2026.04 起源数据统计口径数量级突变，原值如实披露于异常附录。</div></div><div class="metrics-grid"><article class="metric-card"><span class="metric-label">2025 整体销量</span><strong class="metric-value">${fmt(insight.overall2025.sales)}</strong><span class="metric-note">同比 ${fmtPct(insight.overall2025.yoySales)} · 全市场</span></article><article class="metric-card"><span class="metric-label">2025 整体销售额</span><strong class="metric-value">$${fmt(insight.overall2025.revenue / 1000000, 1)}M</strong><span class="metric-note">同比 ${fmtPct(insight.overall2025.yoyRevenue)} · USD</span></article><article class="metric-card"><span class="metric-label">PP 销量贡献</span><strong class="metric-value">${fmt(ppSalesShare2025,1)}%</strong><span class="metric-note">2025 PP销量 / 整体销量</span></article><article class="metric-card"><span class="metric-label">GENIMO PP份额</span><strong class="metric-value">${fmt(insight.genimoPpShare2025,2)}%</strong><span class="metric-note">2025销量份额 · 品牌领先</span></article></div><section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>，不是按月销量重新排名。</li><li>PP标题包含 plastic；高客单排除PP后按材质关键词或价格≥$40。</li><li>同时展示SKU平均标价与销量加权均价（销售额/销量）。</li><li>年度YoY严格使用同周期；2023仅以6-12月对比2022年6-12月。</li><li>月度MOM = 今年X月 vs 去年X月（跨年同月，如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月（连续月环比）。</li></ul><p class="note">2026全年已统一为竞品快照（按父ASIN去重，随机保留一条）口径，每月64-94个父商品；与2025全市场口径（1700-2000 SKU）跨年对比存在范围差异，请以可比口径列为准。</p></section>${htmlSections}<section id="anomaly"><h2>六、2026.03-07竞品替换数据附录（父ASIN去重）</h2>${htmlTable(['月份','纳入可比报告','销量','销售额($)','SKU平均标价','销量加权均价'],sourceDiagnostics.filter((r)=>r.month>='202603').map((r)=>[r.month,r.includedInComparableReport?'是':'否',fmt(r.sales),fmt(r.revenue),fmt(r.avgListPrice,2),fmt(r.weightedPrice,2)]))}</section>${insightHtml}</main></div></div><script>(function(){var root=document.documentElement,button=document.getElementById('theme-toggle');var saved='dark';try{saved=localStorage.getItem('market-report-theme')||'dark'}catch(e){}root.dataset.theme=saved;button.textContent=saved==='dark'?'☀':'☾';button.addEventListener('click',function(){var next=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=next;button.textContent=next==='dark'?'☀':'☾';try{localStorage.setItem('market-report-theme',next)}catch(e){}});var links=[].slice.call(document.querySelectorAll('.sidebar nav a'));var observer=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){links.forEach(function(a){a.classList.toggle('is-active',a.getAttribute('href')==='#'+entry.target.id)})}})},{rootMargin:'-20% 0px -70% 0px'});document.querySelectorAll('[id]').forEach(function(el){observer.observe(el)})})();</script></body></html>`;
+</style></head><body><div class="app-shell"><aside class="sidebar"><div class="brand"><div class="brand-mark"></div><div><strong>Market Intelligence</strong><small>户外地垫市场分析系统</small></div></div><div class="local-badge"><i></i> DATA · VERIFIED</div><span class="nav-label">市场分析</span><nav><a href="#dashboard"><span class="nav-icon">总</span>市场总览</a><a href="#definitions"><span class="nav-icon">径</span>数据口径</a><a href="#overall"><span class="nav-icon">整</span>整体市场</a><a href="#pp"><span class="nav-icon">PP</span>塑料地垫</a><a href="#high"><span class="nav-icon">高</span>高客单非PP</a><a href="#genimo"><span class="nav-icon">G</span>GENIMO</a><a href="#anomaly"><span class="nav-icon">!</span>参考附录</a><a href="#insights"><span class="nav-icon">策</span>趋势与建议</a><a href="#coverage"><span class="nav-icon">核</span>需求覆盖</a></nav><div class="sidebar-footer"><span>可比数据范围</span><strong>${analysisMonths[0]} — ${analysisMonths[analysisMonths.length - 1]}</strong><small>${analysisMonths.length}个月 · 444万单元格核验</small></div></aside><div class="workspace"><header class="topbar"><div><span class="eyebrow">OUTDOOR RUG MARKET INTELLIGENCE</span><h1>市场总览</h1><p>销量、销售额、双均价 · 小类BSR前100 · 月度MoM与年度YoY</p></div><div class="top-actions"><span class="privacy-chip"><i></i> 源数据只读</span><button class="theme-button" id="theme-toggle" aria-label="切换主题">☀</button></div></header><main class="content"><div id="dashboard" class="scope-notice"><span>◎</span><div><b>分析范围：</b>核心 49 个月（202206-202606）含竞品父ASIN去重口径；2026.07 仅作附录/参考。2026 全年已统一为竞品父ASIN去重口径，与 2025 全市场口径不同。</div></div><div class="metrics-grid"><article class="metric-card"><span class="metric-label">2025 整体销量</span><strong class="metric-value">${fmt(insight.overall2025.sales)}</strong><span class="metric-note">同比 ${fmtPct(insight.overall2025.yoySales)} · 全市场</span></article><article class="metric-card"><span class="metric-label">2025 整体销售额</span><strong class="metric-value">$${fmt(insight.overall2025.revenue / 1000000, 1)}M</strong><span class="metric-note">同比 ${fmtPct(insight.overall2025.yoyRevenue)} · USD</span></article><article class="metric-card"><span class="metric-label">PP 销量贡献</span><strong class="metric-value">${fmt(ppSalesShare2025,1)}%</strong><span class="metric-note">2025 PP销量 / 整体销量</span></article><article class="metric-card"><span class="metric-label">GENIMO PP份额</span><strong class="metric-value">${fmt(insight.genimoPpShare2025,2)}%</strong><span class="metric-note">2025销量份额 · 品牌领先</span></article></div><section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>，不是按月销量重新排名。</li><li>PP标题包含 plastic；高客单排除PP后按材质关键词或价格≥$40。</li><li>同时展示SKU平均标价与销量加权均价（销售额/销量）。</li><li>年度YoY严格使用同周期；2023仅以6-12月对比2022年6-12月。</li><li>月度MOM = 今年X月 vs 去年X月（跨年同月，如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月（连续月环比）。</li></ul><p class="note">2026全年已统一为竞品快照（按父ASIN去重，随机保留一条）口径，每月64-94个父商品；与2025全市场口径（1700-2000 SKU）跨年对比存在范围差异，请以可比口径列为准。</p></section>${htmlSections}<section id="anomaly"><h2>六、2026.03-07竞品替换数据附录（父ASIN去重）</h2>${htmlTable(['月份','纳入可比报告','销量','销售额($)','SKU平均标价','销量加权均价'],sourceDiagnostics.filter((r)=>r.month>='202603').map((r)=>[r.month,r.includedInComparableReport?'是':'否',fmt(r.sales),fmt(r.revenue),fmt(r.avgListPrice,2),fmt(r.weightedPrice,2)]))}</section>${insightHtml}</main></div></div><script>(function(){var root=document.documentElement,button=document.getElementById('theme-toggle');var saved='dark';try{saved=localStorage.getItem('market-report-theme')||'dark'}catch(e){}root.dataset.theme=saved;button.textContent=saved==='dark'?'☀':'☾';button.addEventListener('click',function(){var next=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=next;button.textContent=next==='dark'?'☀':'☾';try{localStorage.setItem('market-report-theme',next)}catch(e){}});var links=[].slice.call(document.querySelectorAll('.sidebar nav a'));var observer=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){links.forEach(function(a){a.classList.toggle('is-active',a.getAttribute('href')==='#'+entry.target.id)})}})},{rootMargin:'-20% 0px -70% 0px'});document.querySelectorAll('[id]').forEach(function(el){observer.observe(el)})})();</script></body></html>`;
 
-const coverageScopeText = `明细覆盖 ${analysisMonths.length} 个月（${analysisMonths[0]}-${analysisMonths[analysisMonths.length - 1]}），源库 ${sourceMeta.effective_sheets || 54} 张有效业务表、${fmt(sourceMeta.total_rows || 0)} 条商品记录；2026.03-07 原值保留，但标记为非长期可比口径。`;
-const anomalySectionHtml = `<section id="anomaly"><h2>六、2026.03-2026.07异常附录</h2><p class="note">${coverageScopeText} 异常来自源 Excel 的统计口径变化，不是导入错位；请在确认口径后再用于同比外推。</p>${htmlTable(['月份', '纳入长期可比结论', '销量', '销售额($)', 'SKU平均标价', '加权成交均价'], sourceDiagnostics.filter((row) => row.month >= '202603').map((row) => [row.month, row.includedInLongTermConclusion ? '是' : '否', fmt(row.sales), fmt(row.revenue), fmt(row.avgListPrice, 2), fmt(row.weightedPrice, 2)]))}</section>`;
+const coverageScopeText = `明细覆盖 ${analysisMonths.length} 个月（${analysisMonths[0]}-${analysisMonths[analysisMonths.length - 1]}），源库 ${sourceMeta.effective_sheets || 54} 张有效业务表、${fmt(sourceMeta.total_rows || 0)} 条商品记录；核心结论截止 202606，2026.07 仅附录/参考，2026 全年为竞品父ASIN去重口径。`;
+const anomalySectionHtml = `<section id="anomaly"><h2>六、2026.07附录/参考</h2><p class="note">${coverageScopeText} 2026.07 超出核心截止月份 202606，仅作附录/参考。2026 全年已统一为竞品父ASIN去重口径。</p>${htmlTable(['月份', '状态', '销量', '销售额($)', 'SKU平均标价', '加权成交均价'], sourceDiagnostics.filter((row) => row.month > REPORT_CUTOFF).map((row) => [row.month, '附录/参考（> ' + REPORT_CUTOFF + '）', fmt(row.sales), fmt(row.revenue), fmt(row.avgListPrice, 2), fmt(row.weightedPrice, 2)]))}</section>`;
 let htmlOutput = html
   .replace(/<div id="dashboard" class="scope-notice"><span>◎<\/span><div>[\s\S]*?<\/div><\/div>/, `<div id="dashboard" class="scope-notice"><span>◎</span><div><b>分析范围：</b>${esc(coverageScopeText)}</div></div>`)
-  .replace(/<section id="definitions">[\s\S]*?<\/section>/, `<section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>，多值时取最小可解析名次；头部/中部/尾部为1-20、21-50、51-100，五档为1-5、6-10、11-20、21-50、51-100。</li><li>PP塑料地垫：标题包含 <code>plastic</code>（不区分大小写，空标题按空字符串）。</li><li>高客单非PP：排除PP后，标题命中 polypropylene、sandwich、woven、braided，或价格不低于$40。</li><li>均价同时给出SKU平均标价与销量加权成交均价（销售额/销量）。月度YOY为今年同月对去年同月，月度MOM为本月对上月；年度表使用同周期比较。</li></ul><p class="note">${esc(coverageScopeText)}</p></section>`)
+  .replace(/<section id="definitions">[\s\S]*?<\/section>/, `<section id="definitions"><h2>一、口径说明</h2><ul><li>小类前100依据源字段 <code>小类BSR</code>，多值时取最小可解析名次；头部/中部/尾部为1-20、21-50、51-100，五档为1-5、6-10、11-20、21-50、51-100。</li><li>PP塑料地垫：标题按不区分大小写的完整单词 <code>plastic</code>（单词边界）筛选，空标题按空字符串，不含 plastics 等扩展词。</li><li>高客单非PP：排除PP后的全部商品（SPEC 7.5），不再叠加材质关键词或价格门槛。</li><li>均价同时给出SKU平均标价与销量加权成交均价（销售额/销量）。月度MOM（用户口径）= 今年X月 vs 去年X月同月；月度环比 = 本月 vs 上月；年度表使用同周期比较。</li></ul><p class="note">${esc(coverageScopeText)}</p></section>`)
   .replace(/<section id="anomaly">[\s\S]*?<\/section>/, anomalySectionHtml)
   .replace('销量、销售额、双均价 · 小类BSR前100 · 月度MoM与年度YoY', '销量、销售额、双均价 · 小类BSR Top100 · 月度YOY与MOM')
   .replace('<a href="#genimo"><span class="nav-icon">G</span>GENIMO</a>', '<a href="#genimo"><span class="nav-icon">G</span>GENIMO</a><a href="#genimo-products"><span class="nav-icon">Top</span>GENIMO主力ASIN</a>')
   .replace('<a href="#insights"><span class="nav-icon">策</span>趋势与建议</a>', '<a href="#insights"><span class="nav-icon">策</span>趋势与建议</a><a href="#coverage"><span class="nav-icon">核</span>需求覆盖核对</a>')
   .replace(/<small>[^<]*444万单元格核验<\/small>/, `<small>${analysisMonths.length}个月 · ${fmt(verifiedDataCellCount)}数据单元格</small>`)
   .replace('</main></div></div><script>', coverageHtml + '</main></div></div><script>')
+  .replace('<section id="insights">', referenceHtml + '<section id="insights">')
+  .replace('<section id="insights">', forecastHtml + '<section id="insights">')
+  .replace('<section id="insights">', cohortHtml + '<section id="insights">')
   .replace('<section id="insights">', genimoProductsHtml + '<section id="insights">')
   .replace('</style></head>', '<style>.trend-body{padding:10px 0 2px;color:var(--muted)}.trend-body p{margin:7px 0;font-size:14px}.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.insight-grid article{padding:15px;border:1px solid var(--line);background:var(--surface-soft)}.insight-grid h3{margin:0 0 7px}.insight-grid p{margin:0;color:var(--muted);font-size:14px}@media(max-width:700px){.insight-grid{grid-template-columns:1fr}}</style></head>');
 

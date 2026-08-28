@@ -36,3 +36,4 @@ __pycache__/
 Thumbs.db
 
 # 原始 Excel/SQLite/.env 保持本地；需求文本、参考图片、分析报告和锁文件纳入版本控制，便于复现与回溯
+`n# GitHub Pages 部署工作树（独立分支，不入主库）`n.gh-pages/
