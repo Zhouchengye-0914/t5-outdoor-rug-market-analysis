@@ -2,7 +2,8 @@
 
 // 从 data/raw 的 2026 竞品快照（Competitor-US-2026.XX-*.xlsx）重建竞品审计库（raw_YYYYMM + dedup_YYYYMM）。
 // 该库是 2026.01-07 指标代表行的唯一事实来源：apply_competitor_2026.js 从 dedup_YYYYMM 确定性重放到 market.db。
-// dedup 规则（确定性、可复跑）：每个 Listing 键（父ASIN 优先，缺省用 ASIN）取原始表中第一条记录为代表行。
+// dedup 规则（确定性、可复跑）：每个 Listing 键（父ASIN 优先，缺省用 ASIN）优先取
+// 小类 BSR 最优且指标字段完整的原始行；仍并行保留 raw_* 全量镜像供敏感性审计。
 // 2026.01-06 为全市场 listing 级导出（每月约 1000-2000 个父体）；2026.07 为子体级展开导出（3000 行、94 个父体）。
 
 const fs = require('fs');
@@ -15,7 +16,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 const ROOT = path.resolve(__dirname, '..');
 const RAW_DIR = path.resolve(ROOT, 'data/raw');
 const DB_PATH = path.resolve(ROOT, process.env.COMPETITOR_DB_PATH || 'data/processed/competitor_809440.db');
-const DEDUP_RULE = '每个Listing键（父ASIN优先，缺省ASIN）取原始表第一条记录（确定性，可复跑）';
+const DEDUP_RULE = '每个Listing键（父ASIN优先，缺省ASIN）取最小可解析小类BSR；同名次优先月销量/月销售额完整行，再按源表顺序（确定性，可复跑）';
 
 function colNorm(name) {
   if (!name) return '';
@@ -37,6 +38,26 @@ function dedupColumns(columns) {
 
 function listingKey(row) {
   return String(row['父ASIN'] || '').trim() || String(row.ASIN || '').trim();
+}
+
+function parseBsr(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const matches = String(value).match(/\d[\d,]*/g) || [];
+  const ranks = matches.map((item) => Number(item.replace(/,/g, ''))).filter(Number.isFinite);
+  return ranks.length ? Math.min(...ranks) : null;
+}
+
+function presentNumber(value) {
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+}
+
+function isBetterRepresentative(candidate, current) {
+  if (!current) return true;
+  const candidateRank = candidate.rank === null ? Number.POSITIVE_INFINITY : candidate.rank;
+  const currentRank = current.rank === null ? Number.POSITIVE_INFINITY : current.rank;
+  if (candidateRank !== currentRank) return candidateRank < currentRank;
+  if (candidate.completeMetrics !== current.completeMetrics) return candidate.completeMetrics > current.completeMetrics;
+  return candidate.sourceRow < current.sourceRow;
 }
 
 function quoteIdentifier(value) {
@@ -88,9 +109,8 @@ function main() {
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
     const insertRaw = db.prepare('INSERT INTO ' + quoteIdentifier(rawTable) + ' (' + columns.map(quoteIdentifier).join(', ') + ') VALUES (' + columns.map(() => '?').join(', ') + ')');
     const insertDedup = db.prepare('INSERT INTO ' + quoteIdentifier(dedupTable) + ' (' + columns.map(quoteIdentifier).join(', ') + ') VALUES (' + columns.map(() => '?').join(', ') + ')');
-    const seen = new Set();
+    const representativeByKey = new Map();
     let rawRows = 0;
-    let dedupRows = 0;
     db.exec('BEGIN');
     // 逐行镜像源表（含全空行，全空行存为全 NULL 行，保证行数与 Excel 一致）
     for (let i = range.s.r + 1; i <= range.e.r; i++) {
@@ -103,13 +123,23 @@ function main() {
       insertRaw.run(...values);
       rawRows++;
       const key = String(values[columns.indexOf('父ASIN')] || '').trim() || String(values[columns.indexOf('ASIN')] || '').trim();
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        insertDedup.run(...values);
-        dedupRows++;
+      if (key) {
+        const candidate = {
+          values,
+          sourceRow: i,
+          rank: parseBsr(values[columns.indexOf('小类BSR')]),
+          completeMetrics: Number(presentNumber(values[columns.indexOf('月销量')]))
+            + Number(presentNumber(values[columns.indexOf('月销售额')])),
+        };
+        if (isBetterRepresentative(candidate, representativeByKey.get(key))) {
+          representativeByKey.set(key, candidate);
+        }
       }
     }
+    const representatives = [...representativeByKey.values()].sort((left, right) => left.sourceRow - right.sourceRow);
+    for (const representative of representatives) insertDedup.run(...representative.values);
     db.exec('COMMIT');
+    const dedupRows = representatives.length;
     const sha = crypto.createHash('sha256').update(fs.readFileSync(path.join(RAW_DIR, file))).digest('hex');
     db.prepare('INSERT INTO meta (built_at, source_dir, files, dedup_rule) VALUES (?, ?, ?, ?)')
       .run(new Date().toISOString(), path.relative(ROOT, RAW_DIR), file + '|sha256=' + sha, DEDUP_RULE);

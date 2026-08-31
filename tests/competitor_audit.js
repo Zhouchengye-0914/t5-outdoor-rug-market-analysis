@@ -64,6 +64,29 @@ function listingKey(row) {
   return String(row['父ASIN'] || '').trim() || String(row.ASIN || '').trim();
 }
 
+function parseBsr(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const matches = String(value).match(/\d[\d,]*/g) || [];
+  const ranks = matches.map((item) => Number(item.replace(/,/g, ''))).filter(Number.isFinite);
+  return ranks.length ? Math.min(...ranks) : null;
+}
+
+function presentNumber(value) {
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+}
+
+function expectedRepresentative(candidates) {
+  return [...candidates].sort((left, right) => {
+    const leftRank = parseBsr(left['小类BSR']) ?? Number.POSITIVE_INFINITY;
+    const rightRank = parseBsr(right['小类BSR']) ?? Number.POSITIVE_INFINITY;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    const leftComplete = Number(presentNumber(left['月销量'])) + Number(presentNumber(left['月销售额']));
+    const rightComplete = Number(presentNumber(right['月销量'])) + Number(presentNumber(right['月销售额']));
+    if (leftComplete !== rightComplete) return rightComplete - leftComplete;
+    return left.row_id - right.row_id;
+  })[0];
+}
+
 const db = new DatabaseSync(DB_PATH, { readOnly: true });
 check('seven competitor snapshots discovered', files.length === 7, 'files=' + files.length);
 
@@ -128,13 +151,20 @@ for (const file of files) {
     && dedupKeys.every((key) => groups.has(key)), 'rows=' + dedupRows.length);
 
   let selectedRowsNotInRaw = 0;
+  let representativeRuleMismatches = 0;
   for (const selected of dedupRows) {
     const candidates = groups.get(listingKey(selected)) || [];
     const found = candidates.some((candidate) => dedupColumnsList.every((column) => equivalent(candidate[column], selected[column])));
     if (!found) selectedRowsNotInRaw++;
+    const expected = expectedRepresentative(candidates);
+    if (!expected || !dedupColumnsList.every((column) => equivalent(expected[column], selected[column]))) {
+      representativeRuleMismatches++;
+    }
   }
   check(month + ' every canonical representative is an exact raw row', selectedRowsNotInRaw === 0,
     'notFound=' + selectedRowsNotInRaw);
+  check(month + ' canonical representative follows best-BSR rule', representativeRuleMismatches === 0,
+    'mismatches=' + representativeRuleMismatches);
 }
 
 console.log('\n========== COMPETITOR AUDIT ==========');
