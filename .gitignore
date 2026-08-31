@@ -1,5 +1,4 @@
 # 临时调试文件和数据
-data/raw/
 data/processed/*.db
 data/processed/*.sqlite
 data/processed/*.sqlite3
@@ -19,9 +18,6 @@ sandbox/*
 *.sqlite-wal
 *.sqlite-shm
 
-# Excel 源文件（已移至 data/raw/）
-*.xlsx
-*.xls
 
 # Node.js / Python
 node_modules/

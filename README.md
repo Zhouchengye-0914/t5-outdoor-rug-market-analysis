@@ -21,7 +21,7 @@
 .
 ├── .env                       # 实际配置 (gitignore)
 ├── .env.example               # 配置模板 (提交到 git)
-├── .gitignore                 # 屏蔽 data/raw, *.db, *.xlsx, node_modules
+├── .gitignore                 # 屏蔽 *.db, node_modules, .env（data/raw 及 xlsx 数据文件纳入版本控制）
 ├── README.md                  # 本文件
 ├── package.json               # npm 元数据
 ├── docs/
@@ -226,7 +226,7 @@ frontend_audit: 39 tables / 24,770 cells / 24 checks / 0 failures
 | docs/SPEC.md 唯一事实来源 | ✅ 含数据源 / schema / PoC / 验收 |
 | docs/TASKS.md 原子化任务 | ✅ 12 个 Task 全部 [x] |
 | docs/REVIEWS.md 审查草稿 | ✅ 已建 (默认空) |
-| data/raw 不入 git | ✅ .gitignore 已配置 |
+| data/raw（含竞品快照、参考 workbook、周报等 xlsx） | ✅ 纳入版本控制，便于复现与回溯 |
 | data/processed/*.db 不入 git | ✅ .gitignore 已配置 |
 | .env.example 配置唯一来源 | ✅ 含 RAW_EXCEL_PATH / DATABASE_URL 等 |
 | sandbox/ 跑通 PoC | ✅ sandbox/test_xlsx.js 已验证 55 sheet |
