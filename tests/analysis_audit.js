@@ -55,6 +55,9 @@ check('historical BSR quality diagnostics cover all 43 pre-2026 months',
     && row.identifierCoveragePct === 0 && row.strictListingPool === false));
 check('merged 2026 overall trend covers Jan-Jul in order', data.overallMarketTrend2026.length === 7
   && data.overallMarketTrend2026.map((row) => row.month).join(',') === '202601,202602,202603,202604,202605,202606,202607');
+check('BSR multi-value audit preserves source and parsed rank', Array.isArray(data.dataQuality.bsrMultiValueAudit)
+  && data.dataQuality.bsrMultiValueAudit.every((row) => row.multiValue === true
+    && Boolean(row.sourceBsr) && Number.isFinite(row.rank) && Boolean(row.listingKey)));
 
 const catalog = db.prepare("SELECT target_table FROM sheet_catalog WHERE target_table IS NOT NULL").all();
 let actualRows = 0;
@@ -188,6 +191,7 @@ for (const row of data.overallMarketTrend2026.filter((item) => item.month <= '20
   if (!source || !row.coreComparable || row.skuCount !== source.skuCount
     || !close(row.sales, source.sales) || !close(row.revenue, source.revenue)
     || !close(row.avgListPrice, source.avgListPrice) || !close(row.weightedPrice, source.weightedPrice)
+    || row.momBasis !== source.momBasis || row.chainBasis !== source.chainBasis
     || !close(row.momSales, source.momSales) || !close(row.momRevenue, source.momRevenue)
     || !close(row.chainSales, source.chainSales) || !close(row.chainRevenue, source.chainRevenue)) {
     mergedTrendReconciles = false;
@@ -237,6 +241,27 @@ check('202602 overall benchmark MOM sales ≈ -14.8%', close(benchmark.momSales,
 check('202602 overall benchmark MOM revenue ≈ -20.5%', close(benchmark.momRevenue, -20.5, 0.1), benchmark.momRevenue.toFixed(3));
 check('202602 overall benchmark chain sales ≈ +9.6%', close(benchmark.chainSales, 9.6, 0.1), benchmark.chainSales.toFixed(3));
 check('202602 overall benchmark chain revenue ≈ +23.8%', close(benchmark.chainRevenue, 23.8, 0.1), benchmark.chainRevenue.toFixed(3));
+check('202602 benchmark basis months are explicit and correct', benchmark.momBasis === '202502'
+  && benchmark.chainBasis === '202601');
+
+check('PP independent listing details cover 202601-202606', data.ppListingDetailsPeriod === '202601-202606'
+  && data.ppListingDetails.length > 0
+  && data.ppListingDetails.every((row) => row.month >= '202601' && row.month <= '202606'
+    && Boolean(row.listingKey)));
+const ppDetailKeys = new Set(data.ppListingDetails.map((row) => row.month + '|' + row.listingKey));
+check('PP independent listing detail keys are unique by month', ppDetailKeys.size === data.ppListingDetails.length);
+let ppDetailsReconcile = true;
+for (const month of data.analysisMonths.filter((value) => value >= '202601' && value <= '202606')) {
+  const details = data.ppListingDetails.filter((row) => row.month === month);
+  const monthly = pp.get(month);
+  if (!monthly || details.length !== monthly.skuCount
+    || !close(details.reduce((sum, row) => sum + row.sales, 0), monthly.sales)
+    || !close(details.reduce((sum, row) => sum + row.revenue, 0), monthly.revenue)) {
+    ppDetailsReconcile = false;
+    break;
+  }
+}
+check('PP independent listing details reconcile to monthly aggregates', ppDetailsReconcile);
 
 function listingKey(row) {
   return String(row.parent || '').trim() || String(row.asin || '').trim() || 'row-' + row.row_id;
@@ -289,7 +314,24 @@ for (const [name, output] of [['Markdown', markdown], ['HTML', html]]) {
     && output.includes('GENIMO 2026.01-06累计Top父体')
     && !output.includes('2025年PP销量份额'));
   check(name + ' has no obsolete 64-94 monthly caliber claim', !output.includes('2026年数据源已切换为竞品父ASIN去重口径（64-94父商品/月）'));
+  check(name + ' visibly discloses MOM and chain basis months', output.includes('MOM基准月份')
+    && output.includes('环比基准月份'));
+  check(name + ' visibly exposes replacement trace', output.includes('2026数据替换审计记录')
+    && data.replacementMetadata.every((row) => output.includes(row.source_sha256)));
+  check(name + ' visibly exposes BSR multi-value audit', output.includes('BSR多值解析审计'));
+  check(name + ' visibly exposes PP independent listing detail', output.includes('PP独立Listing明细'));
+  check(name + ' contains GENIMO packaging small-batch validation gate', /300-500\s*单/.test(output)
+    && (output.includes('包边') || output.includes('边缘处理'))
+    && output.includes('卷边') && output.includes('破损'));
+  check(name + ' identifies leadership reference provenance', output.includes('领导提供并确认通过'));
 }
+check('forecast parameters are explicit and rendered', Array.isArray(data.forecastParameters)
+  && data.forecastParameters.length === 4
+  && data.forecastParameters.every((row) => row.parameter && row.defaultValue && row.effect)
+  && markdown.includes('预测可调整参数') && html.includes('可调整参数'));
+check('quick report contains packaging small-batch validation gate', /300-500\s*单/.test(quick)
+  && (quick.includes('包边') || quick.includes('边缘处理'))
+  && quick.includes('卷边') && quick.includes('破损'));
 check('forecast includes all four required 2026 Q4 ranges', ['104,000-125,000', '89,000-107,000', '85,000-102,000', '91,000-110,000']
   .every((range) => markdown.includes(range) && html.includes(range)));
 check('HTML includes three accessible static SVG trend charts', (html.match(/<figure class="chart-card">/g) || []).length === 3
