@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-04T03:30:53.436Z",
+  "generatedAt": "2026-09-04T06:18:12.792Z",
   "source": "market.db",
   "sourceMeta": {
     "id": 1,
-    "imported_at": "2026-08-31T03:13:42.243Z",
+    "imported_at": "2026-09-04T06:11:57.859Z",
     "source_file": "地垫-卖家精灵市场数据.xlsx",
     "source_size_bytes": 44284788,
     "total_sheets": 55,
@@ -14,7 +14,7 @@
     "monthly_tables": 50,
     "summary_tables": 4,
     "total_rows": 73812,
-    "db_size_bytes": 52764672,
+    "db_size_bytes": 52793344,
     "schema_version": "1.1.0"
   },
   "sourceMonths": [
@@ -131,84 +131,84 @@
       "target_table": "monthly_202601",
       "source_database": "competitor_809440.db",
       "source_table": "dedup_202601",
-      "source_sha256": "c1cd80a29e6e2e7188d6b88a77d597ffe163377983960a062f97648fa5d03df7",
+      "source_sha256": "662a1d616f75320e97b00336838a671b4c61ea2098e37fee402886f582335c0c",
       "base_imported_rows": 1239,
       "source_raw_rows": 1135,
       "replacement_rows": 1134,
       "selection_rule": "canonical dedup snapshot; one representative row per parent/ASIN; analysis derives best category BSR from raw variants",
-      "applied_at": "2026-08-31T03:13:46.747Z"
+      "applied_at": "2026-09-04T06:14:13.312Z"
     },
     {
       "month": "202602",
       "target_table": "monthly_202602",
       "source_database": "competitor_809440.db",
       "source_table": "dedup_202602",
-      "source_sha256": "c1cd80a29e6e2e7188d6b88a77d597ffe163377983960a062f97648fa5d03df7",
+      "source_sha256": "662a1d616f75320e97b00336838a671b4c61ea2098e37fee402886f582335c0c",
       "base_imported_rows": 1045,
       "source_raw_rows": 1039,
       "replacement_rows": 1038,
       "selection_rule": "canonical dedup snapshot; one representative row per parent/ASIN; analysis derives best category BSR from raw variants",
-      "applied_at": "2026-08-31T03:13:46.747Z"
+      "applied_at": "2026-09-04T06:14:13.312Z"
     },
     {
       "month": "202603",
       "target_table": "monthly_202603",
       "source_database": "competitor_809440.db",
       "source_table": "dedup_202603",
-      "source_sha256": "c1cd80a29e6e2e7188d6b88a77d597ffe163377983960a062f97648fa5d03df7",
+      "source_sha256": "662a1d616f75320e97b00336838a671b4c61ea2098e37fee402886f582335c0c",
       "base_imported_rows": 2002,
       "source_raw_rows": 2002,
       "replacement_rows": 1766,
       "selection_rule": "canonical dedup snapshot; one representative row per parent/ASIN; analysis derives best category BSR from raw variants",
-      "applied_at": "2026-08-31T03:13:46.747Z"
+      "applied_at": "2026-09-04T06:14:13.312Z"
     },
     {
       "month": "202604",
       "target_table": "monthly_202604",
       "source_database": "competitor_809440.db",
       "source_table": "dedup_202604",
-      "source_sha256": "c1cd80a29e6e2e7188d6b88a77d597ffe163377983960a062f97648fa5d03df7",
+      "source_sha256": "662a1d616f75320e97b00336838a671b4c61ea2098e37fee402886f582335c0c",
       "base_imported_rows": 2000,
       "source_raw_rows": 1745,
       "replacement_rows": 1744,
       "selection_rule": "canonical dedup snapshot; one representative row per parent/ASIN; analysis derives best category BSR from raw variants",
-      "applied_at": "2026-08-31T03:13:46.747Z"
+      "applied_at": "2026-09-04T06:14:13.312Z"
     },
     {
       "month": "202605",
       "target_table": "monthly_202605",
       "source_database": "competitor_809440.db",
       "source_table": "dedup_202605",
-      "source_sha256": "c1cd80a29e6e2e7188d6b88a77d597ffe163377983960a062f97648fa5d03df7",
+      "source_sha256": "662a1d616f75320e97b00336838a671b4c61ea2098e37fee402886f582335c0c",
       "base_imported_rows": 2000,
       "source_raw_rows": 1691,
       "replacement_rows": 1690,
       "selection_rule": "canonical dedup snapshot; one representative row per parent/ASIN; analysis derives best category BSR from raw variants",
-      "applied_at": "2026-08-31T03:13:46.747Z"
+      "applied_at": "2026-09-04T06:14:13.312Z"
     },
     {
       "month": "202606",
       "target_table": "monthly_202606",
       "source_database": "competitor_809440.db",
       "source_table": "dedup_202606",
-      "source_sha256": "c1cd80a29e6e2e7188d6b88a77d597ffe163377983960a062f97648fa5d03df7",
+      "source_sha256": "662a1d616f75320e97b00336838a671b4c61ea2098e37fee402886f582335c0c",
       "base_imported_rows": 2000,
       "source_raw_rows": 2002,
       "replacement_rows": 1993,
       "selection_rule": "canonical dedup snapshot; one representative row per parent/ASIN; analysis derives best category BSR from raw variants",
-      "applied_at": "2026-08-31T03:13:46.747Z"
+      "applied_at": "2026-09-04T06:14:13.312Z"
     },
     {
       "month": "202607",
       "target_table": "monthly_202607",
       "source_database": "competitor_809440.db",
       "source_table": "dedup_202607",
-      "source_sha256": "c1cd80a29e6e2e7188d6b88a77d597ffe163377983960a062f97648fa5d03df7",
+      "source_sha256": "662a1d616f75320e97b00336838a671b4c61ea2098e37fee402886f582335c0c",
       "base_imported_rows": 2000,
       "source_raw_rows": 3000,
       "replacement_rows": 94,
       "selection_rule": "canonical dedup snapshot; one representative row per parent/ASIN; analysis derives best category BSR from raw variants",
-      "applied_at": "2026-08-31T03:13:46.747Z"
+      "applied_at": "2026-09-04T06:14:13.312Z"
     }
   ],
   "leadershipBenchmark": {

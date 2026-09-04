@@ -127,6 +127,87 @@ function safeTableName(type, rawName) {
   return null;
 }
 
+function finiteNumber(value) {
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+}
+
+function sumColumn(rows, column) {
+  let total = 0;
+  let count = 0;
+  for (const row of rows) {
+    if (!finiteNumber(row[column])) continue;
+    total += Number(row[column]);
+    count++;
+  }
+  return count ? total : null;
+}
+
+// The supplied workbook contains formulas in the TOP sheets without cached <v>
+// values. SheetJS therefore exposes those cells as undefined when reading the
+// workbook. Reconstruct the small, auditable formula set before type inference
+// and insertion so the SQLite mirror contains the displayed/calculated values.
+function restoreTopFormulaValues(sheetName, allRows, context) {
+  const groupLabel = (rankIndex) => {
+    const start = Math.floor(rankIndex / 10) * 10 + 1;
+    return start + ' - ' + (start + 9);
+  };
+
+  if (sheetName === 'TOP销量 ') {
+    for (let row = 0; row < Math.min(100, allRows.length); row++) {
+      if (allRows[row][1] === null || allRows[row][1] === undefined) allRows[row][1] = groupLabel(row);
+    }
+    const totalRow = allRows[100];
+    if (totalRow) {
+      for (let column = 2; column < totalRow.length; column++) totalRow[column] = sumColumn(allRows.slice(0, 100), column);
+    }
+    return;
+  }
+
+  if (sheetName === 'TOP销量 （倍率）') {
+    for (let row = 0; row < Math.min(100, allRows.length); row++) {
+      if (allRows[row][1] === null || allRows[row][1] === undefined) allRows[row][1] = groupLabel(row);
+      // S=R/Q, U=T/R, W=V/T, Y=X/V in the source workbook (zero-based columns).
+      for (const [target, numerator, denominator] of [[18, 17, 16], [20, 19, 17], [22, 21, 19], [24, 23, 21]]) {
+        const n = allRows[row][numerator];
+        const d = allRows[row][denominator];
+        allRows[row][target] = finiteNumber(n) && finiteNumber(d) && Number(d) !== 0 ? Number(n) / Number(d) : null;
+      }
+    }
+    const totalRow = allRows[100];
+    if (totalRow) {
+      for (let column = 2; column < totalRow.length; column++) totalRow[column] = sumColumn(allRows.slice(0, 100), column);
+    }
+    return;
+  }
+
+  if (sheetName === 'TOP总销售额') {
+    const totalRow = allRows[100];
+    if (totalRow) {
+      for (let column = 1; column < totalRow.length; column++) totalRow[column] = sumColumn(allRows.slice(0, 100), column);
+    }
+    return;
+  }
+
+  if (sheetName === 'TOP平均单价') {
+    const salesRows = context.get('TOP总销售额');
+    const volumeRows = context.get('TOP销量 ');
+    if (!salesRows || !volumeRows) throw new Error('TOP平均单价 formula dependencies are not available');
+    // B:Y (2022.06-2024.05) and AV:AY (2026.04-2026.07) are formula columns.
+    const formulaColumns = [];
+    for (let column = 1; column <= 24; column++) formulaColumns.push(column);
+    for (let column = 47; column <= 50; column++) formulaColumns.push(column);
+    for (let row = 0; row < Math.min(100, allRows.length); row++) {
+      for (const column of formulaColumns) {
+        const revenue = salesRows[row] && salesRows[row][column];
+        const volume = volumeRows[row] && volumeRows[row][column + 1];
+        allRows[row][column] = finiteNumber(revenue) && finiteNumber(volume) && Number(volume) !== 0
+          ? Number(revenue) / Number(volume)
+          : null;
+      }
+    }
+  }
+}
+
 function processMonthlySheet(db, sheet, sheetName) {
   const range = xlsx.utils.decode_range(sheet['!ref']);
   const headerRow = detectHeaderRow(sheet);
@@ -193,7 +274,7 @@ function processMonthlySheet(db, sheet, sheetName) {
   return allRows.length;
 }
 
-function processTopSheet(db, sheet, sheetName) {
+function processTopSheet(db, sheet, sheetName, topFormulaContext) {
   const range = xlsx.utils.decode_range(sheet['!ref']);
   const tableName = safeTableName('top', sheetName);
   if (!tableName) return;
@@ -216,6 +297,8 @@ function processTopSheet(db, sheet, sheetName) {
     }
     allRows.push(row);
   }
+
+  restoreTopFormulaValues(sheetName, allRows, topFormulaContext);
 
   const colTypes = [];
   for (let c = 0; c < headers.length; c++) {
@@ -254,6 +337,7 @@ function processTopSheet(db, sheet, sheetName) {
   db.exec('COMMIT');
 
   log('info', 'top ' + sheetName + ' -> ' + tableName + ' (' + allRows.length + ' rows, ' + headers.length + ' cols)');
+  topFormulaContext.set(sheetName, allRows.map((row) => row.slice()));
   return allRows.length;
 }
 
@@ -326,6 +410,7 @@ function main() {
   let skipCount = 0;
   let visibleCount = 0;
   let hiddenCount = 0;
+  const topFormulaContext = new Map();
 
   const sheetMetaByName = new Map(
     ((wb.Workbook && wb.Workbook.Sheets) || []).map((s) => [s.name, s]),
@@ -355,7 +440,7 @@ function main() {
       const tableName = safeTableName(type, sheetName);
       if (!tableName) throw new Error('Unmapped TOP sheet: ' + sheetName);
       topCount++;
-      const importedRows = processTopSheet(db, sheet, sheetName);
+      const importedRows = processTopSheet(db, sheet, sheetName, topFormulaContext);
       catalogStmt.run(sheetIndex + 1, sheetName, visibility, hiddenCode, sheet['!ref'], type, tableName, importedRows, null);
       continue;
     }

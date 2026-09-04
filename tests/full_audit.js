@@ -94,6 +94,24 @@ function equivalent(expected, actual) {
   return String(actual) === String(expected);
 }
 
+// TOP formulas have no cached <v> values in the source workbook. The importer
+// restores these deterministic formulas, so the raw cell-equality loop must
+// skip only those coordinates and validate their results explicitly below.
+function isFormulaCell(sheetName, row, column) {
+  if (sheetName === 'TOP销量 ') {
+    return (row >= 1 && row <= 100 && column === 1) || (row === 101 && column >= 2 && column <= 51);
+  }
+  if (sheetName === 'TOP销量 （倍率）') {
+    return (row >= 1 && row <= 100 && (column === 1 || column === 18 || column === 20 || column === 22 || column === 24))
+      || (row === 101 && column >= 2 && column <= 55);
+  }
+  if (sheetName === 'TOP总销售额') return row === 101 && column >= 1 && column <= 50;
+  if (sheetName === 'TOP平均单价') {
+    return row >= 1 && row <= 100 && ((column >= 1 && column <= 24) || (column >= 47 && column <= 50));
+  }
+  return false;
+}
+
 const workbook = xlsx.readFile(EXCEL, { cellDates: false, cellNF: false, cellFormula: false });
 const db = new DatabaseSync(DB_PATH, { readOnly: true });
 const competitor = new DatabaseSync(COMPETITOR_DB_PATH, { readOnly: true });
@@ -174,6 +192,10 @@ for (const sheetName of workbook.SheetNames) {
     }
     for (let row = headerRow + 1, rowIndex = 0; row <= range.e.r; row++, rowIndex++) {
       for (let column = range.s.c; column <= range.e.c; column++) {
+        if (isFormulaCell(sheetName, row, column)) {
+          cellsChecked++;
+          continue;
+        }
         const cell = sheet[xlsx.utils.encode_cell({ r: row, c: column })];
         const expected = cell ? cell.v : null;
         const targetColumn = targetColumns[column - range.s.c];
@@ -190,12 +212,110 @@ for (const sheetName of workbook.SheetNames) {
   sheetsChecked++;
 }
 
+function formulaColumnNames(tableName, zeroBasedColumns) {
+  const columns = db.prepare('PRAGMA table_info(' + tableName + ')').all()
+    .map((column) => column.name).filter((name) => !['row_id', 'month_label'].includes(name));
+  return zeroBasedColumns.map((index) => columns[index]);
+}
+
+const formulaChecks = [];
+function checkFormulaValues(label, sql, expected) {
+  const actual = Number(db.prepare(sql).get().count);
+  const pass = actual === expected;
+  formulaChecks.push(pass);
+  console.log((pass ? '[PASS] ' : '[FAIL] ') + label + ' (nonNull=' + actual + ' expected=' + expected + ')');
+  if (!pass) structuralIssues++;
+}
+
+let formulaValueChecks = 0;
+let formulaValueFailures = 0;
+function checkFormulaValue(label, actual, expected) {
+  formulaValueChecks++;
+  const pass = actual !== null && actual !== undefined && expected !== null && expected !== undefined
+    && Math.abs(Number(actual) - Number(expected)) <= 1e-9;
+  if (!pass) {
+    formulaValueFailures++;
+    if (formulaValueFailures <= 5) console.log('[FAIL] ' + label + ' actual=' + JSON.stringify(actual) + ' expected=' + JSON.stringify(expected));
+  }
+}
+
+const topSalesColumns = formulaColumnNames('top_sales_volume', Array.from({ length: 50 }, (_, i) => i + 2));
+checkFormulaValues('TOP销量 group formulas restored', 'SELECT COUNT(*) AS count FROM top_sales_volume WHERE [组别] IS NOT NULL', 100);
+checkFormulaValues('TOP销量 total formulas restored', "SELECT COUNT(*) AS count FROM top_sales_volume WHERE [排名_销量]='总计（TOP前100）' AND " + topSalesColumns.map((column) => '[' + column + '] IS NOT NULL').join(' AND '), 1);
+
+const topRatioFormulaColumns = formulaColumnNames('top_sales_volume_ratio', [18, 20, 22, 24]);
+checkFormulaValues('TOP销量（倍率） group formulas restored', 'SELECT COUNT(*) AS count FROM top_sales_volume_ratio WHERE [组别] IS NOT NULL', 100);
+for (const column of topRatioFormulaColumns) {
+  checkFormulaValues('TOP销量（倍率） formula column ' + column + ' restored', 'SELECT COUNT(*) AS count FROM top_sales_volume_ratio WHERE [' + column + '] IS NOT NULL', 101);
+}
+const topRatioSummaryColumns = formulaColumnNames('top_sales_volume_ratio', Array.from({ length: 54 }, (_, i) => i + 2));
+checkFormulaValues('TOP销量（倍率） total formulas restored', "SELECT COUNT(*) AS count FROM top_sales_volume_ratio WHERE [排名_销量]='总计' AND " + topRatioSummaryColumns.map((column) => '[' + column + '] IS NOT NULL').join(' AND '), 1);
+
+const topRevenueColumns = formulaColumnNames('top_total_sales', Array.from({ length: 50 }, (_, i) => i + 1));
+checkFormulaValues('TOP总销售额 total formulas restored', "SELECT COUNT(*) AS count FROM top_total_sales WHERE [排名_销售额]='总计' AND " + topRevenueColumns.map((column) => '[' + column + '] IS NOT NULL').join(' AND '), 1);
+
+const topAvgFormulaColumns = formulaColumnNames('top_avg_price', [
+  ...Array.from({ length: 24 }, (_, i) => i + 1),
+  ...Array.from({ length: 4 }, (_, i) => i + 47),
+]);
+checkFormulaValues('TOP平均单价 formula cells restored', 'SELECT COUNT(*) AS count FROM top_avg_price WHERE ' + topAvgFormulaColumns.map((column) => '[' + column + '] IS NOT NULL').join(' AND '), 100);
+
+const topSalesRows = db.prepare('SELECT * FROM top_sales_volume ORDER BY row_id').all();
+const topSalesDataColumns = formulaColumnNames('top_sales_volume', Array.from({ length: 50 }, (_, i) => i + 2));
+for (let index = 0; index < topSalesDataColumns.length; index++) {
+  const expected = topSalesRows.slice(0, 100).reduce((sum, row) => sum + (Number(row[topSalesDataColumns[index]]) || 0), 0);
+  checkFormulaValue('TOP销量 total ' + topSalesDataColumns[index], topSalesRows[100][topSalesDataColumns[index]], expected);
+}
+
+const topRatioRows = db.prepare('SELECT * FROM top_sales_volume_ratio ORDER BY row_id').all();
+const topRatioColumns = formulaColumnNames('top_sales_volume_ratio', [18, 20, 22, 24]);
+const ratioRefs = [[17, 16], [19, 17], [21, 19], [23, 21]];
+for (let row = 0; row < 100; row++) {
+  for (let index = 0; index < topRatioColumns.length; index++) {
+    const [numerator, denominator] = ratioRefs[index];
+    const allColumns = formulaColumnNames('top_sales_volume_ratio', Array.from({ length: 54 }, (_, i) => i));
+    const expected = Number(topRatioRows[row][allColumns[denominator]]) === 0 ? null
+      : Number(topRatioRows[row][allColumns[numerator]]) / Number(topRatioRows[row][allColumns[denominator]]);
+    checkFormulaValue('TOP销量（倍率） row=' + (row + 1) + ' column=' + topRatioColumns[index], topRatioRows[row][topRatioColumns[index]], expected);
+  }
+}
+const topRatioDataColumns = formulaColumnNames('top_sales_volume_ratio', Array.from({ length: 54 }, (_, i) => i + 2));
+for (let index = 0; index < topRatioDataColumns.length; index++) {
+  const expected = topRatioRows.slice(0, 100).reduce((sum, row) => sum + (Number(row[topRatioDataColumns[index]]) || 0), 0);
+  checkFormulaValue('TOP销量（倍率） total ' + topRatioDataColumns[index], topRatioRows[100][topRatioDataColumns[index]], expected);
+}
+
+const topRevenueRows = db.prepare('SELECT * FROM top_total_sales ORDER BY row_id').all();
+const topRevenueDataColumns = formulaColumnNames('top_total_sales', Array.from({ length: 50 }, (_, i) => i + 1));
+for (let index = 0; index < topRevenueDataColumns.length; index++) {
+  const expected = topRevenueRows.slice(0, 100).reduce((sum, row) => sum + (Number(row[topRevenueDataColumns[index]]) || 0), 0);
+  checkFormulaValue('TOP总销售额 total ' + topRevenueDataColumns[index], topRevenueRows[100][topRevenueDataColumns[index]], expected);
+}
+
+const topAvgRows = db.prepare('SELECT * FROM top_avg_price ORDER BY row_id').all();
+const topAvgAllColumns = formulaColumnNames('top_avg_price', Array.from({ length: 51 }, (_, i) => i));
+for (let row = 0; row < 100; row++) {
+  for (const columnIndex of [
+    ...Array.from({ length: 24 }, (_, i) => i + 1),
+    ...Array.from({ length: 4 }, (_, i) => i + 47),
+  ]) {
+    const revenueColumn = topRevenueDataColumns[columnIndex - 1];
+    const volumeColumn = topSalesDataColumns[columnIndex - 1];
+    const expected = Number(topSalesRows[row][volumeColumn]) === 0 ? null
+      : Number(topRevenueRows[row][revenueColumn]) / Number(topSalesRows[row][volumeColumn]);
+    checkFormulaValue('TOP平均单价 row=' + (row + 1) + ' column=' + topAvgAllColumns[columnIndex], topAvgRows[row][topAvgAllColumns[columnIndex]], expected);
+  }
+}
+if (formulaValueFailures) structuralIssues++;
+
 console.log('\n========== FULL ACTIVE-SOURCE AUDIT ==========');
 console.log('Sheets checked: ' + sheetsChecked);
 console.log('Cells checked: ' + cellsChecked);
 console.log('Structural issues: ' + structuralIssues);
 console.log('Value mismatches: ' + valueMismatches);
 console.log('Numeric type changes: ' + numericTypeChanges + ' (informational)');
+console.log('Formula restoration checks: ' + formulaChecks.length + ' (' + formulaChecks.filter(Boolean).length + ' passed)');
+console.log('Formula value checks: ' + formulaValueChecks + ' (' + (formulaValueChecks - formulaValueFailures) + ' passed)');
 competitor.close();
 db.close();
 process.exit(structuralIssues || valueMismatches ? 1 : 0);
