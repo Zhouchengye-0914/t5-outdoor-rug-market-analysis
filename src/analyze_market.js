@@ -853,6 +853,7 @@ md.push('', '## 十、参考材料核对', '',
   '- 两份参考 workbook 由领导提供并确认通过（PP管数据、BSR年度分层与2027规划）；已核对工作表结构、筛选公式和BSR解析规则。',
   '- PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年数据因源Excel不含ASIN列，无法进行父ASIN去重，故PP前100独立Listing数在2025年存在差异。',
   '- 2026.01-06 已更新为全市场父体级快照（1038-1993父体/月，替代原64-94父体口径），与领导参考 workbook 的2026年PP数据源不同，月度总量不可直接横向比较；2026.07 仍为94父体快照。',
+  '- 计划部核对 workbook（实际路径：新增参考的材料和内容/销量预测计划部底表-户外地垫.xlsx）：行业大盘 BI 全类目 2026H1 同比独立重算为 +2.8106%；BSR Top100 按 Q=1..100、AX:BC 对 BJ:BO 独立重算为 +5.0910%。原表 P 列误用 BJ:BN+BP，且 M:P 未覆盖 Q=79..100，以上公式缺陷仅作核对记录，不替代当前市场 DB。',
   '- 参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91。该核实使用参考 workbook 自身数据源（含父ASIN），市场DB 2025年无父ASIN，跨年父体进退仅对2026年首尾月有效。',
   '- 参考 workbook GENIMO 2027规划已整合进本报告第八节建议；建议中的历史实绩基线统一使用2026.01-06数据，参考 workbook 只提供规划结构、门槛和预测假设。',
   '');
@@ -943,6 +944,7 @@ const genimoProductsHtml = `<section id="genimo-products"><h2>七、GENIMO 2026.
 const cohortHtml = '<section id="cohort"><h2>六、父体进退（Cohort）</h2><p>BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月，仅2026含父ASIN数据）。</p>' + ['overall','pp','high','genimo'].map((key) => { const co = categories[key].cohort; if (!co) return ''; return '<p><b>' + labels[key] + '</b>：前100父体池从 ' + co.fromParents + ' 变为 ' + co.toParents + '；留存 ' + co.retained + '、退出 ' + co.exited + '、新进入 ' + co.entered + '。层间迁移：' + Object.entries(co.migration).map(([k, v]) => k + '=' + v).join('、') + '。</p>'; }).join('') + '<p class="note">2025年全市场口径数据不含父ASIN，无法跨年父体进退比较，跨年参考见第十节参考材料核对。</p></section>';
 const forecastHtml = '<section id="forecast"><h2>九、2027规划与预测（预测/假设，非历史实绩）</h2><p class="note">以下数据来自领导提供并确认通过的参考 workbook 预测基准和程序综合研判，均标注为"预测/假设"，不作为历史实绩使用。</p><h3>2026年9—12月市场趋势预测</h3>' + htmlTable(['月份','销量基准预测','销量可能区间','销售额基准预测','市场阶段'], FORECAST_2026_Q4.map((fm) => [fmtMonth(fm.month), '约' + fmt(fm.sales), fm.range, '约' + fmt(fm.rev,0) + '美元', fm.stage])) + '<h3>2027年销量和销售额趋势预测</h3>' + htmlTable(['月份','2027年销量基准预测','销售额基准预测','趋势'], FORECAST_2027_MONTHLY.map((fm) => [fmtMonth(fm.month), fmt(fm.sales), '约' + fmt(fm.rev,0) + '美元', fm.note])) + '<h3>2027情景</h3>' + htmlTable(['情景','年销量','年销售额','触发条件'], FORECAST_2027_SCENARIOS.map((fs) => [fs.scenario, fs.sales, fs.rev, fs.trigger])) + '<h3>可调整参数</h3><p class="note">更新情景时只调整下列参数，不回写历史实绩。</p>' + htmlTable(['参数','默认值','调整方式'], FORECAST_PARAMETERS.map((fp) => [fp.parameter, fp.defaultValue, fp.effect])) + '</section>';
 const referenceHtml = '<section id="reference"><h2>十、参考材料核对</h2><ul><li>两份参考 workbook 由领导提供并确认通过（PP管数据、BSR年度分层与2027规划）；已核对工作表结构、筛选公式和BSR解析规则。</li><li>PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年数据因源Excel不含ASIN列，无法进行父ASIN去重，故PP前100独立Listing数在2025年存在差异。</li><li>2026.01-06为全市场父体级快照（1038-1993父体/月），2026.07为94父体小样本；领导参考 workbook 的2026年PP数据与当前市场DB数据源不同，月度总量不可直接横向比较。</li><li>参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91；该核实使用参考 workbook 自身数据源（含父ASIN）。</li><li>参考 workbook GENIMO 2027规划结构已整合进第八节；所有历史实绩与量化建议统一采用2026.01-06核心数据。</li></ul></section>';
+const planReferenceHtml = '<li>计划部核对 workbook（实际路径：新增参考的材料和内容/销量预测计划部底表-户外地垫.xlsx）：行业大盘 BI 全类目 2026H1 同比独立重算为 +2.8106%；BSR Top100 按 Q=1..100、AX:BC 对 BJ:BO 独立重算为 +5.0910%。原表 P 列误用 BJ:BN+BP，且 M:P 未覆盖 Q=79..100；以上公式缺陷仅作核对记录，不替代当前市场 DB。</li>';
 
 const coverageHtml = `<section id="coverage"><h2>十一、需求覆盖核对</h2>${htmlTable(['要求项', '交付位置', '状态'], [['整体市场销量/销售额/均价', '整体市场月度与年度表', '已覆盖'], ['2026.01-07整体市场趋势合并', '整体市场首张合并趋势表；2026.07跨口径指标标记不适用', '已覆盖'], ['整体月度MOM与环比', '所有月度表分别显示MOM/环比基准月份', '已覆盖'], ['小类前100同比/环比', '各分类 BSR Top100月度、年度表', '已覆盖'], ['BSR多值解析标记', '口径说明中的多值解析审计表及JSON', '已覆盖'], ['头部/中部/尾部及五档', '各分类 BSR分层月度、年度表', '已覆盖'], ['PP独立Listing明细', 'PP章节核心截止月明细；JSON保留2026.01-06全量', '已覆盖'], ['高客单非PP（排除PP后全部产品）', '高客单分类（排除PP后全部产品）', '已覆盖'], ['数据替换逐月可追溯', '整体市场的数据替换审计记录', '已覆盖'], ['趋势与GENIMO建议使用2026实绩', '第八节、GENIMO 2026累计Top父体与数据JSON', '已覆盖'], ['GENIMO工艺/包装验证', '第八节300-500单小批量验证规则', '已覆盖'], ['预测可调整参数', '第九节需求/价格/时间/情景参数', '已覆盖']])}</section>`;
 
@@ -993,9 +995,10 @@ let htmlOutput = html
   .replace(/<small>[^<]*444万单元格核验<\/small>/, `<small>${analysisMonths.length}个月 · ${fmt(verifiedDataCellCount)}数据单元格</small>`)
   .replace(/<strong>\d{6} — \d{6}<\/strong>/, `<strong>${fmtMonth(analysisMonths[0])} — ${fmtMonth(analysisMonths[analysisMonths.length - 1])}</strong>`)
   .replace('</main></div></div><script>', coverageHtml + '</main></div></div><script>')
-  .replace(/<section id="insights">[\s\S]*?<\/section>/, cohortHtml + genimoProductsHtml + insightHtml + forecastHtml + referenceHtml)
+  .replace(/<section id="insights">[\s\S]*?<\/section>/, cohortHtml + genimoProductsHtml + insightHtml + forecastHtml + referenceHtml.replace('</ul></section>', planReferenceHtml + '</ul></section>'))
   // insightHtml 是历史长模板，最终渲染前再做一次口径清理，确保连续环比不进入交付 HTML。
   .replace('；2026月度环比保持父体口径一致。', '；月度MOM/环比统一采用跨年同月基准。')
+  .replace('月度MOM = 今年X月 vs 去年X月（跨年同月，如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月（连续月环比）。', '月度MOM/环比（用户口径）= 今年X月 vs 去年X月同月；本次不计算或展示本月 vs 上月的连续环比。')
   .replace(/、环比 -，为核心期峰值；/g, '、为核心期峰值；')
   .replace(/，环比 -，为核心期峰值；/g, '，为核心期峰值；')
   .replace(/，月度环比 - \/ -；/g, '；')

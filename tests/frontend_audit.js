@@ -258,6 +258,9 @@ for (const s of ['-14.8%', '-20.5%', '+9.6%', '+23.8%', '-27.7%', '-0.1%', '+9.3
 for (const s of ['1038', '1993', '1683', '2000', '1134', '1039', '1766', '1744', '1690', '1135', '1745', '1691', '2002', '3000', '94']) expectedSet.add(s);
 for (const s of ['112', '125', '156', '153', '100', '162,797', '6,446,797', '39.60', '49', '54', '71,451', '4,261,173', '73,812', '160', '144', '53', '107', '91', '65']) expectedSet.add(s);
 for (const s of ['56.6%', '20.86%', '27.03%', '1,734,909', '$98.9M', '$98.9', '-14.7%', '-20.1%', '$57.0M', '-15.2%', '-26.4%', '$41.9M', '-9.7%', '$16.3M', '+10.7%', '+83.0%', '+65.2%']) expectedSet.add(s);
+// Plan-reference workbook figures are intentionally disclosed in the
+// provenance section but are not part of market.db JSON metrics.
+for (const s of ['+2.8106%', '+5.0910%']) expectedSet.add(s);
 const tokens = textOnly.match(/(?:\$|\+|-)?\d+(?:,\d{3})*(?:\.\d+)?%?/g) || [];
 const seenUnknown = new Set();
 let unknownCount = 0;
