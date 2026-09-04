@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T02:56:28.836Z",
+  "generatedAt": "2026-09-04T03:27:38.194Z",
   "source": "market.db",
   "sourceMeta": {
     "id": 1,
@@ -211,6 +211,83 @@
       "applied_at": "2026-08-31T03:13:46.747Z"
     }
   ],
+  "leadershipBenchmark": {
+    "available": true,
+    "sourceFile": "新增参考的材料和内容\\销量预测计划部底表-户外地垫.xlsx",
+    "industry": {
+      "available": true,
+      "sourceFile": "新增参考的材料和内容\\销量预测计划部底表-户外地垫.xlsx",
+      "sheet": "行业大盘数据",
+      "sourceLabel": "BI看板-亚马逊后台",
+      "category": "Outdoor Rugs",
+      "metric": "sales",
+      "period": "202601-202606 vs 202501-202506",
+      "baselineSales": 1781765,
+      "currentSales": 1831843,
+      "growthPct": 2.810583887325202,
+      "formula": "SUM(I4:I9)/SUM(H4:H9)-1",
+      "months": [
+        {
+          "month": "202601",
+          "baselineMonth": "202501",
+          "baselineSales": 101991,
+          "currentSales": 87343,
+          "momSales": -14.362051553568456
+        },
+        {
+          "month": "202602",
+          "baselineMonth": "202502",
+          "baselineSales": 123187,
+          "currentSales": 109170,
+          "momSales": -11.378635732666599
+        },
+        {
+          "month": "202603",
+          "baselineMonth": "202503",
+          "baselineSales": 255621,
+          "currentSales": 275204,
+          "momSales": 7.660951173808095
+        },
+        {
+          "month": "202604",
+          "baselineMonth": "202504",
+          "baselineSales": 364728,
+          "currentSales": 369265,
+          "momSales": 1.2439406900484729
+        },
+        {
+          "month": "202605",
+          "baselineMonth": "202505",
+          "baselineSales": 484252,
+          "currentSales": 471247,
+          "momSales": -2.68558519118145
+        },
+        {
+          "month": "202606",
+          "baselineMonth": "202506",
+          "baselineSales": 451986,
+          "currentSales": 519614,
+          "momSales": 14.962410340143272
+        }
+      ],
+      "revenueAvailable": false,
+      "note": "仅提供全类目销量；未提供销售额/均价，不推导缺失指标。"
+    },
+    "bsrTop100": {
+      "available": true,
+      "sourceFile": "新增参考的材料和内容\\销量预测计划部底表-户外地垫.xlsx",
+      "sheet": "BSR底表-美国",
+      "metric": "sales",
+      "period": "202601-202606 vs 202501-202506",
+      "rankRange": "Q=1..100",
+      "baselineSales": 1066818,
+      "currentSales": 1121130,
+      "growthPct": 5.091027710443585,
+      "formula": "SUM(Q=1..100, BJ:BO)/SUM(Q=1..100, AX:BC)-1",
+      "note": "按原始月度输入独立求和；不使用原表 P 列的漏月/混月公式。"
+    },
+    "error": null
+  },
   "dataQuality": {
     "competitorDatabaseAvailable": true,
     "bestBsrEnrichedMonths": [

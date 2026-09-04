@@ -237,6 +237,20 @@ check('202602 overall benchmark MOM sales ≈ -14.8%', close(benchmark.momSales,
 check('202602 overall benchmark MOM revenue ≈ -20.5%', close(benchmark.momRevenue, -20.5, 0.1), benchmark.momRevenue.toFixed(3));
 check('202602 has no obsolete chain comparison', !Object.keys(benchmark).some((key) => key.startsWith('chain')));
 check('202602 benchmark basis month is explicit and correct', benchmark.momBasis === '202502');
+const leadership = data.leadershipBenchmark;
+check('leadership benchmark is loaded from plan workbook', leadership && leadership.available
+  && leadership.industry && leadership.industry.baselineSales === 1781765
+  && leadership.industry.currentSales === 1831843
+  && close(leadership.industry.growthPct, 2.810583887325202, 1e-9)
+  && leadership.industry.formula === 'SUM(I4:I9)/SUM(H4:H9)-1');
+check('leadership BSR benchmark independently reconciles', leadership && leadership.bsrTop100
+  && leadership.bsrTop100.baselineSales === 1066818
+  && leadership.bsrTop100.currentSales === 1121130
+  && close(leadership.bsrTop100.growthPct, 5.091027710443585, 1e-9)
+  && leadership.bsrTop100.rankRange === 'Q=1..100');
+check('leadership positive benchmark is disclosed in reports', markdown.includes('领导验收主口径')
+  && markdown.includes('1,831,843') && markdown.includes('1,781,765') && markdown.includes('**+2.8%**')
+  && html.includes('领导验收主基准') && html.includes('+2.8%'));
 const marchBenchmark = overall.get('202603');
 check('202603 uses 202503 cross-year MOM and excludes prior-month +120.5/+94.7', marchBenchmark.momBasis === '202503'
   && close(marchBenchmark.momSales, pct(marchBenchmark.sales, overall.get('202503').sales))

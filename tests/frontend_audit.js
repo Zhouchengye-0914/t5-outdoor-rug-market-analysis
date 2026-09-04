@@ -172,6 +172,14 @@ function trendAnalysis(c, category, label) {
   const groupLine = groups2026.map((row) => row.segment + '销量方向变化 ' + fmtPct(row.yoySales) + '、销售额方向变化 ' + fmtPct(row.yoyRevenue)).join('；');
   const peak2026 = [...c.monthly.filter((row) => row.month.startsWith('2026'))].sort((a, b) => b.sales - a.sales)[0];
   const out = ['### ' + label + '趋势分析', ''];
+  if (category === 'overall' && data.leadershipBenchmark && data.leadershipBenchmark.available && data.leadershipBenchmark.industry) {
+    const lead = data.leadershipBenchmark.industry;
+    const leadBsr = data.leadershipBenchmark.bsrTop100;
+    const bsrText = leadBsr && leadBsr.available
+      ? '；同一 workbook 的 BSR Top100 独立重算为 ' + fmt(leadBsr.currentSales) + ' vs ' + fmt(leadBsr.baselineSales) + '，销量方向变化 ' + fmtPct(leadBsr.growthPct)
+      : '';
+    out.push('- 领导验收口径（计划部 BI 全类目）：2026.01-2026.06 vs 2025.01-2025.06销量 ' + fmt(lead.currentSales) + ' vs ' + fmt(lead.baselineSales) + '，销量方向变化 ' + fmtPct(lead.growthPct) + bsrText + '。该参考表仅提供销量，不推导销售额或均价。');
+  }
   if (annual2026) out.push('- 2026.01-06核心实绩：销量 ' + fmt(annual2026.sales) + '、销售额 $' + fmt(annual2026.revenue) + '；按现有混合统计单元相对2025同期的方向变化为 ' + fmtPct(annual2026.yoySales) + ' / ' + fmtPct(annual2026.yoyRevenue) + '，SKU平均标价/加权成交均价方向变化为 ' + fmtPct(annual2026.yoyAvgListPrice) + ' / ' + fmtPct(annual2026.yoyWeightedPrice) + '，不可解释为严格同口径同比。');
   if (top2026 && annual2026) out.push('- 2026.01-06 BSR前100贡献销量 ' + fmt(top2026.sales) + '（占同期' + fmt(top2026.sales / annual2026.sales * 100, 1) + '%），销售额占比 ' + fmt(top2026.revenue / annual2026.revenue * 100, 1) + '%；相对2025行代理池的销量/销售额方向变化为 ' + fmtPct(top2026.yoySales) + ' / ' + fmtPct(top2026.yoyRevenue) + '。');
   if (groupLine) out.push('- 2026.01-06头中尾分层：' + groupLine + '。');
@@ -255,6 +263,7 @@ for (const v of [data.insights.overall2026.revenue]) { expectedSet.add(fmt(v / 1
 for (const m of [...(data.analysisMonths || []), ...(data.sourceMonths || [])]) { expectedSet.add(m); expectedSet.add(m.slice(0, 4) + '.' + m.slice(4)); expectedSet.add(m.slice(0, 4) + '.' + Number(m.slice(4))); }
 for (const y of ['2022', '2023', '2024', '2025', '2026', '2027', '2028']) expectedSet.add(y);
 for (const s of ['-14.8%', '-20.5%', '+9.6%', '+23.8%', '-27.7%', '-0.1%', '+9.3%', '+33.5%']) expectedSet.add(s);
+for (const s of ['1,831,843', '1,781,765', '1,121,130', '1,066,818', '+2.8%', '+5.1%', '2.8106%', '5.0910%']) expectedSet.add(s);
 for (const s of ['1038', '1993', '1683', '2000', '1134', '1039', '1766', '1744', '1690', '1135', '1745', '1691', '2002', '3000', '94']) expectedSet.add(s);
 for (const s of ['112', '125', '156', '153', '100', '162,797', '6,446,797', '39.60', '49', '54', '71,451', '4,261,173', '73,812', '160', '144', '53', '107', '91', '65']) expectedSet.add(s);
 for (const s of ['56.6%', '20.86%', '27.03%', '1,734,909', '$98.9M', '$98.9', '-14.7%', '-20.1%', '$57.0M', '-15.2%', '-26.4%', '$41.9M', '-9.7%', '$16.3M', '+10.7%', '+83.0%', '+65.2%']) expectedSet.add(s);
@@ -291,6 +300,12 @@ check('全量快照复核文案与 JSON 一致', html.includes('整体市场全�
   && Math.abs(b202602.momSales - (-14.8)) < 0.11 && Math.abs(b202602.momRevenue - (-20.5)) < 0.11
   && !Object.keys(b202602).some((key) => key.startsWith('chain')),
   'json=' + b202602.momSales.toFixed(1) + '/' + b202602.momRevenue.toFixed(1));
+check('领导验收主基准正向结果与 JSON 一致', data.leadershipBenchmark && data.leadershipBenchmark.available
+  && html.includes('领导验收主基准')
+  && html.includes('1,831,843') && html.includes('1,781,765') && html.includes('+2.8%')
+  && html.includes('1,121,130') && html.includes('1,066,818') && html.includes('+5.1%')
+  && Math.abs(data.leadershipBenchmark.industry.growthPct - 2.810583887325202) < 1e-9
+  && Math.abs(data.leadershipBenchmark.bsrTop100.growthPct - 5.091027710443585) < 1e-9);
 check('2026.03 不展示旧连续环比 +120.5%/+94.7%', !html.includes('2026.03 vs 2026.02')
   && !html.includes('2026.03</td><td>2025.03</td><td>1,766</td><td>252,620</td><td>12,968,763</td><td>64.93</td><td>51.34</td><td>+1.9%</td><td>-17.7%</td><td>-13.9%</td><td>-19.2%</td><td>+120.5%')
   && !html.includes('2026.03</td><td>2025.03</td><td>1,766</td><td>252,620</td><td>12,968,763</td><td>64.93</td><td>51.34</td><td>+1.9%</td><td>-17.7%</td><td>-13.9%</td><td>-19.2%</td><td>+94.7%'));
