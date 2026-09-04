@@ -162,30 +162,27 @@ function summarize(rows) {
 
 function addTrends(monthly) {
   const byMonth = new Map(monthly.map((row) => [row.month, row]));
-  for (let i = 0; i < monthly.length; i++) {
-    const row = monthly[i];
-    const previous = monthly[i - 1];
+  for (const row of monthly) {
     const lastYear = byMonth.get(String(Number(row.month.slice(0, 4)) - 1) + row.month.slice(4));
-    // 用户口径：MOM = 今年X月 vs 去年X月（跨年同月）；月度环比 = 本月 vs 上月。
+    // 最新用户口径：月度MOM/环比 = 今年X月 vs 去年X月（跨年同月）。
     row.momBasis = lastYear ? lastYear.month : null;
-    row.chainBasis = previous ? previous.month : null;
     row.momSales = lastYear ? pct(row.sales, lastYear.sales) : null;
     row.momRevenue = lastYear ? pct(row.revenue, lastYear.revenue) : null;
     row.momAvgListPrice = lastYear ? pct(row.avgListPrice, lastYear.avgListPrice) : null;
     row.momWeightedPrice = lastYear ? pct(row.weightedPrice, lastYear.weightedPrice) : null;
-    row.chainSales = previous ? pct(row.sales, previous.sales) : null;
-    row.chainRevenue = previous ? pct(row.revenue, previous.revenue) : null;
-    row.chainAvgListPrice = previous ? pct(row.avgListPrice, previous.avgListPrice) : null;
-    row.chainWeightedPrice = previous ? pct(row.weightedPrice, previous.weightedPrice) : null;
-    // 基准月/上月存在但对应分层为空（0 SKU / 0 销量）时，同/环比无对应数据可比。
+    // 跨年同月基准存在但对应分层为空（0 SKU / 0 销量）时，变化无对应数据可比。
     // 典型场景：2025.05 源表小类BSR同值重复（BSR=17 重复112行等），前100全部落入1-20，
-    // 导致 2025.05 中部/尾部为空 → 2026.05 中部/尾部 MOM、2025.06 中部/尾部环比缺失。
+    // 导致 2025.05 中部/尾部为空 → 2026.05 中部/尾部跨年同月变化缺失。
     row.momGapReason = lastYear && (lastYear.skuCount === 0 || lastYear.sales === 0)
-      ? '基准月 ' + lastYear.month + ' 对应分层为空，MOM无对应数据可比'
+      ? '基准月 ' + lastYear.month + ' 对应分层为空，跨年同月MOM/环比无对应数据可比'
       : null;
-    row.chainGapReason = previous && (previous.skuCount === 0 || previous.sales === 0)
-      ? '上月 ' + previous.month + ' 对应分层为空，环比无对应数据可比'
-      : null;
+    // 删除历史连续环比字段，避免旧的 chain/previous 比较混入当前交付物。
+    delete row.chainBasis;
+    delete row.chainSales;
+    delete row.chainRevenue;
+    delete row.chainAvgListPrice;
+    delete row.chainWeightedPrice;
+    delete row.chainGapReason;
   }
   return monthly;
 }
@@ -265,11 +262,11 @@ function trendAnalysis(c, category, label) {
   if (groupLine) out.push(`- 2026.01-06头中尾分层：${groupLine}。`);
   if (benchmark) {
     const expected = category === 'overall'
-      ? '（整体市场全量快照复核值约 -14.8% / -20.5% / +9.6% / +23.8%）'
+      ? '（整体市场全量快照复核值约 -14.8% / -20.5%）'
       : '';
-    out.push(`- ${fmtMonth(benchmark.month)}：跨年同月方向变化（报告MOM口径）销量 ${fmtPct(benchmark.momSales)}、销售额 ${fmtPct(benchmark.momRevenue)}；同为父体口径的月度环比（本月vs上月）销量 ${fmtPct(benchmark.chainSales)}、销售额 ${fmtPct(benchmark.chainRevenue)}${expected}。`);
+    out.push(`- ${fmtMonth(benchmark.month)}：月度MOM/环比按跨年同月口径（${fmtMonth(benchmark.month)} vs ${fmtMonth(benchmark.momBasis)}）销量 ${fmtPct(benchmark.momSales)}、销售额 ${fmtPct(benchmark.momRevenue)}${expected}。`);
   }
-  if (baseline && baseline.month !== '202602') out.push(`- 2026核心截止月 ${fmtMonth(baseline.month)}：跨年同月方向变化销量 ${fmtPct(baseline.momSales)}、销售额 ${fmtPct(baseline.momRevenue)}；同为父体口径的月度环比（本月vs上月）销量 ${fmtPct(baseline.chainSales)}、销售额 ${fmtPct(baseline.chainRevenue)}。`);
+  if (baseline && baseline.month !== '202602') out.push(`- 2026核心截止月 ${fmtMonth(baseline.month)}：月度MOM/环比按跨年同月口径（${fmtMonth(baseline.month)} vs ${fmtMonth(baseline.momBasis)}）销量 ${fmtPct(baseline.momSales)}、销售额 ${fmtPct(baseline.momRevenue)}。`);
   if (peak2026) out.push(`- 2026.01-06核心月份中，${fmtMonth(peak2026.month)}销量最高，为 ${fmt(peak2026.sales)} 件；该峰值用于安排2027旺季前4-8周的补货、广告与新品测试。`);
   const scopeAnchor = c.monthly.find((row) => row.month === '202604');
   if (scopeAnchor && baseline) out.push(`- 口径提示：2026.01-06为全市场父体级快照（每月1038-1993个父体），2025为无ASIN的行级导出（每月1683-2000行，含变体行）。两者量级接近不等于统计单元一致，跨年变化仅作方向性参考；2026.07为94父体小样本，只合并展示，不参与同比、环比和累计。`);
@@ -510,7 +507,7 @@ const sourceDiagnostics = sourceMonths.map((month) => ({
 }));
 
 // 领导反馈：整体市场趋势必须把 2026.01-07 合并到同一张趋势表。
-// 2026.07 仍为 94 父体小样本，因此只合并展示原始规模，不计算跨口径 MOM/月度环比。
+// 2026.07 仍为 94 父体小样本，因此只合并展示原始规模，不计算跨口径 MOM/环比。
 const overallMarketTrend2026 = sourceMonths.filter((month) => month >= '202601' && month <= '202607').map((month) => {
   const diagnostic = sourceDiagnostics.find((row) => row.month === month);
   const core = categories.overall.monthly.find((row) => row.month === month);
@@ -522,11 +519,8 @@ const overallMarketTrend2026 = sourceMonths.filter((month) => month >= '202601' 
     avgListPrice: diagnostic.avgListPrice,
     weightedPrice: diagnostic.weightedPrice,
     momBasis: core ? core.momBasis : null,
-    chainBasis: core ? core.chainBasis : null,
     momSales: core ? core.momSales : null,
     momRevenue: core ? core.momRevenue : null,
-    chainSales: core ? core.chainSales : null,
-    chainRevenue: core ? core.chainRevenue : null,
     coreComparable: Boolean(core),
     scopeStatus: core
       ? '核心全市场父体快照'
@@ -595,8 +589,7 @@ const data = {
     bsrGroups: 'head = 1-20, middle = 21-50, tail = 51-100; groups do not overlap',
     avgListPrice: 'simple average of non-null, non-blank, numeric SKU list prices; missing prices are excluded rather than treated as zero',
     weightedPrice: '月销售额 / 月销量',
-    momMonthly: '月度MOM（用户口径）：今年X月 vs 去年X月同月（跨年同月）',
-    chainMonthly: '月度环比：本月 vs 上月',
+    momMonthly: '月度MOM/环比（最新用户口径）：今年X月 vs 去年X月同月（跨年同月）',
     annualYoY: '年度同周期数值对比；2026.01-06 vs 2025.01-06 因统计单元从行级变为父体级，仅作方向性参考，不是严格同口径同比',
   },
   categories,
@@ -651,18 +644,18 @@ data.insights = {
 };
 
 function mdMonthly(rows) {
-  const out = ['| 月份 | MOM基准月份 | 环比基准月份 | SKU数 | 销量 | 销售额($) | SKU平均标价($) | 加权成交均价($) | MOM销量 | MOM销售额 | MOM标价 | MOM成交均价 | 环比销量 | 环比销售额 |',
-    '|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
-  for (const r of rows) out.push(`| ${fmtMonth(r.month)} | ${r.momBasis ? fmtMonth(r.momBasis) : '-'} | ${r.chainBasis ? fmtMonth(r.chainBasis) : '-'} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.avgListPrice, 2)} | ${fmt(r.weightedPrice, 2)} | ${fmtPct(r.momSales)} | ${fmtPct(r.momRevenue)} | ${fmtPct(r.momAvgListPrice)} | ${fmtPct(r.momWeightedPrice)} | ${fmtPct(r.chainSales)} | ${fmtPct(r.chainRevenue)} |`);
+  const out = ['| 月份 | MOM/环比基准月份 | SKU数 | 销量 | 销售额($) | SKU平均标价($) | 加权成交均价($) | MOM/环比销量 | MOM/环比销售额 | MOM/环比标价 | MOM/环比成交均价 |',
+    '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
+  for (const r of rows) out.push(`| ${fmtMonth(r.month)} | ${r.momBasis ? fmtMonth(r.momBasis) : '-'} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.avgListPrice, 2)} | ${fmt(r.weightedPrice, 2)} | ${fmtPct(r.momSales)} | ${fmtPct(r.momRevenue)} | ${fmtPct(r.momAvgListPrice)} | ${fmtPct(r.momWeightedPrice)} |`);
   return out.join('\n');
 }
 function mergedTrendPct(row, field) {
   return row.coreComparable ? fmtPct(row[field]) : '不适用（口径不同）';
 }
 function mdOverallMarketTrend2026(rows) {
-  const out = ['| 月份 | 口径状态 | MOM基准月份 | 环比基准月份 | Listing数 | 销量 | 销售额($) | SKU平均标价($) | 加权成交均价($) | MOM销量 | MOM销售额 | 环比销量 | 环比销售额 |',
-    '|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
-  for (const row of rows) out.push(`| ${fmtMonth(row.month)} | ${row.scopeStatus} | ${row.momBasis ? fmtMonth(row.momBasis) : '-'} | ${row.chainBasis ? fmtMonth(row.chainBasis) : '-'} | ${fmt(row.skuCount)} | ${fmt(row.sales)} | ${fmt(row.revenue)} | ${fmt(row.avgListPrice, 2)} | ${fmt(row.weightedPrice, 2)} | ${mergedTrendPct(row, 'momSales')} | ${mergedTrendPct(row, 'momRevenue')} | ${mergedTrendPct(row, 'chainSales')} | ${mergedTrendPct(row, 'chainRevenue')} |`);
+  const out = ['| 月份 | 口径状态 | MOM/环比基准月份 | Listing数 | 销量 | 销售额($) | SKU平均标价($) | 加权成交均价($) | MOM/环比销量 | MOM/环比销售额 |',
+    '|---|---|---|---:|---:|---:|---:|---:|---:|---:|'];
+  for (const row of rows) out.push(`| ${fmtMonth(row.month)} | ${row.scopeStatus} | ${row.momBasis ? fmtMonth(row.momBasis) : '-'} | ${fmt(row.skuCount)} | ${fmt(row.sales)} | ${fmt(row.revenue)} | ${fmt(row.avgListPrice, 2)} | ${fmt(row.weightedPrice, 2)} | ${mergedTrendPct(row, 'momSales')} | ${mergedTrendPct(row, 'momRevenue')} |`);
   return out.join('\n');
 }
 
@@ -701,7 +694,7 @@ function mdAnnual(rows) {
   return out.join('\n');
 }
 
-// 分层表的同/环比单元格：基准/上月分层为空时显示"无对应数据"而非留空或'-'
+// 分层表的跨年同月MOM/环比单元格：基准分层为空时显示"无对应数据"而非留空或'-'
 function segPct(row, field, gapField) {
   const value = row[field];
   if (value === null || value === undefined || !Number.isFinite(value)) {
@@ -711,11 +704,11 @@ function segPct(row, field, gapField) {
 }
 
 function mdSegments(rows) {
-  const out = ['| 月份 | BSR分层 | MOM基准月份 | 环比基准月份 | SKU数 | 销量 | 销售额($) | 加权成交均价($) | MOM销量 | MOM销售额 | MOM成交均价 | 环比销量 | 环比销售额 |',
-    '|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
-  for (const r of rows) out.push(`| ${fmtMonth(r.month)} | ${r.segment} | ${r.momBasis ? fmtMonth(r.momBasis) : '-'} | ${r.chainBasis ? fmtMonth(r.chainBasis) : '-'} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.weightedPrice, 2)} | ${segPct(r, 'momSales', 'momGapReason')} | ${segPct(r, 'momRevenue', 'momGapReason')} | ${segPct(r, 'momWeightedPrice', 'momGapReason')} | ${segPct(r, 'chainSales', 'chainGapReason')} | ${segPct(r, 'chainRevenue', 'chainGapReason')} |`);
-  const hasGap = rows.some((r) => r.momGapReason || r.chainGapReason);
-  if (hasGap) out.push('', '> 注：“无对应数据”表示基准月/上月该分层为空（0条Listing），同/环比无法计算。整体市场与高客单的 2026.05 中部/尾部 MOM、2025.06 中部/尾部环比缺失源于 2025.05 源数据小类BSR同值重复（详见一、口径说明）；GENIMO 部分月份分层无在榜商品属正常稀疏。');
+  const out = ['| 月份 | BSR分层 | MOM/环比基准月份 | SKU数 | 销量 | 销售额($) | 加权成交均价($) | MOM/环比销量 | MOM/环比销售额 | MOM/环比成交均价 |',
+    '|---|---|---|---:|---:|---:|---:|---:|---:|---:|'];
+  for (const r of rows) out.push(`| ${fmtMonth(r.month)} | ${r.segment} | ${r.momBasis ? fmtMonth(r.momBasis) : '-'} | ${fmt(r.skuCount)} | ${fmt(r.sales)} | ${fmt(r.revenue)} | ${fmt(r.weightedPrice, 2)} | ${segPct(r, 'momSales', 'momGapReason')} | ${segPct(r, 'momRevenue', 'momGapReason')} | ${segPct(r, 'momWeightedPrice', 'momGapReason')} |`);
+  const hasGap = rows.some((r) => r.momGapReason);
+  if (hasGap) out.push('', '> 注：“无对应数据”表示跨年同月基准分层为空（0条Listing），MOM/环比无法计算。整体市场与高客单的 2026.05 中部/尾部缺失源于 2025.05 源数据小类BSR同值重复（详见一、口径说明）；GENIMO 部分月份分层无在榜商品属正常稀疏。');
   return out.join('\n');
 }
 function mdAnnualSegments(rows) {
@@ -734,8 +727,8 @@ const md = ['# 户外地垫市场分析报告（优化版）', '',
   '- PP：标题按不区分大小写的完整单词 `plastic`（单词边界）筛选，NULL按空字符串处理；不含 `plastics` 等扩展词。2026同父体任一变体命中即将该父体归入PP。',
   '- 高客单非PP：排除PP父体后的全部商品（SPEC 7.5，不再叠加材质关键词或价格门槛）。',
   '- 同时提供SKU平均标价和销量加权均价（销售额/销量）；SKU平均标价仅统计非空、可解析的价格，缺失值不按0计入。',
-  '- 月度MOM（用户口径）= 今年X月 vs 去年X月同月（如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月；年度YOY = 年度同周期对比。',
-  '- 2025.05（主表导出日 2025-06-19，该表无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部 MOM（同比2025.05）与 2025.06 中部/尾部环比显示“无对应数据”；2026.05 头部 MOM 的基准为上述异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考，不可解读为真实头部同比。GENIMO 部分月份分层无在榜商品亦显示“无对应数据”（正常稀疏，非数据错误）。',
+  '- 月度MOM/环比（用户口径）= 今年X月 vs 去年X月同月（如 2025.01 vs 2024.01）；本次交付不计算或展示本月 vs 上月的连续环比；年度YOY = 年度同周期对比。',
+  '- 2025.05（主表导出日 2025-06-19，该表无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部跨年同月 MOM/环比显示“无对应数据”；2026.05 头部 MOM 的基准为上述异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考，不可解读为真实头部同比。GENIMO 部分月份分层无在榜商品亦显示“无对应数据”（正常稀疏，非数据错误）。',
   '- BSR头部/中部/尾部分别为1-20、21-50、51-100；五档明细为1-5、6-10、11-20、21-50、51-100，区间不重叠。',
   '- 年度数值使用同月份集合比较；2023对2022仅比较6-12月。2025是无ASIN的行级导出（含变体行），2026是父ASIN去重快照；即使月度量级接近，统计单元仍不同，所以2025→2026只标为方向性参考，不构成严格同比。', ''];
 md.push('### BSR多值解析审计', '',
@@ -752,7 +745,7 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
       '### 2026数据替换审计记录', '', mdReplacementMetadata(replacementMetadata), '',
       '> 每月替换记录同时保存在 market.db 的 analysis_replacements 表；源库SHA-256用于确认七个月均来自同一次确定性快照构建。', '');
   }
-  md.push(trendAnalysis(c, category, labels[category]), '### 月度指标、年度YOY、用户定义MOM与月度环比', '', mdMonthly(c.monthly), '',
+  md.push(trendAnalysis(c, category, labels[category]), '### 月度指标、年度YOY与用户定义MOM/环比', '', mdMonthly(c.monthly), '',
     '### 年度/同周期汇总', '', mdAnnual(c.annual), '', '### 小类BSR前100汇总（BSR 1-100）', '', mdMonthly(c.bsrTop100.monthly), '',
     '### 小类BSR前100年度/同周期汇总', '', mdAnnual(c.bsrTop100.annual), '', '### 小类BSR头部/中部/尾部（月度）', '', mdSegments(c.bsrGroups.monthly), '',
     '### 小类BSR头部/中部/尾部（年度）', '', mdAnnualSegments(c.bsrGroups.annual), '', '### 小类BSR五档分层（月度）', '', mdSegments(c.bsrSegments.monthly), '',
@@ -805,10 +798,10 @@ md.push('', '## 八、趋势结论与GENIMO建议（基于2026.01-06实绩）', 
   `- **高客单非PP**：2026.01-06销量 ${fmt(insight.high2026.sales)}、销售额 $${fmt(insight.high2026.revenue)}；相对2025同期的方向变化为 ${fmtPct(insight.high2026.yoySales)} / ${fmtPct(insight.high2026.yoyRevenue)}，加权成交均价方向变化 ${fmtPct(insight.high2026.yoyWeightedPrice)}。`,
   `- **GENIMO**：2026.01-06品牌销量 ${fmt(insight.genimo2026.sales)}、销售额 $${fmt(insight.genimo2026.revenue)}；相对2025同期的方向变化为 ${fmtPct(insight.genimo2026.yoySales)} / ${fmtPct(insight.genimo2026.yoyRevenue)}，GENIMO在PP中的销量/销售额份额为 ${fmt(insight.genimoPpShare2026, 2)}% / ${fmt(insight.genimoPpRevenueShare2026, 2)}%。`, '',
   '### 建议', '',
-  `1. 2026.06整体销量 ${fmt(categories.overall.monthly.find((row) => row.month === '202606').sales)}、环比 ${fmtPct(categories.overall.monthly.find((row) => row.month === '202606').chainSales)}，为核心期峰值；2027旺季补货和广告应在峰值前4-8周完成。`,
+  `1. 2026.06整体销量 ${fmt(categories.overall.monthly.find((row) => row.month === '202606').sales)}，为核心期峰值；2027旺季补货和广告应在峰值前4-8周完成。`,
   `2. PP在2026.01-06贡献整体销量 ${fmt(insight.ppSalesShare2026, 1)}%、销售额 ${fmt(insight.ppRevenueShare2026, 1)}%；保持PP流量盘，同时用非PP高客单产品修复销售额与价格结构。`,
   `3. GENIMO在2026.06的BSR头部仅 ${fmt(genimoJuneHead.skuCount)} 个Listing，却贡献品牌当月销量 ${fmt(genimoJuneHeadSalesShare, 1)}%；应控制头部集中风险，并补强中部 ${fmt(genimoJuneMiddle.skuCount)} 个、尾部 ${fmt(genimoJuneTail.skuCount)} 个在榜Listing。`,
-  `4. GENIMO 2026.06相对2025同月的销量/销售额方向变化为 ${fmtPct(insight.genimoJune2026.momSales)} / ${fmtPct(insight.genimoJune2026.momRevenue)}，同为父体口径的月度环比（本月vs上月）为 ${fmtPct(insight.genimoJune2026.chainSales)} / ${fmtPct(insight.genimoJune2026.chainRevenue)}；2027扩量必须同步约束毛利、TACOS和库存覆盖。`,
+  `4. GENIMO 2026.06相对2025同月的月度MOM/环比销量、销售额方向变化为 ${fmtPct(insight.genimoJune2026.momSales)} / ${fmtPct(insight.genimoJune2026.momRevenue)}；2027扩量必须同步约束毛利、TACOS和库存覆盖。`,
   '5. 2026.07已并入整体市场趋势表，但只有94个父体，不得把其总量变化解读为完整市场同比或环比。',
   '6. GENIMO 2027规划采用“1个头部锚点 + 3-5个中部利润层 + 4-8个尾部测试池”，并执行下述晋级/退出门槛。');
 md.push('', '### GENIMO 2027产品规划（来自参考 workbook，SPEC 1.3/7.7/验收22）', '',
@@ -895,12 +888,12 @@ function svgLineChart(title, rows, field, valueLabel) {
 }
 
 function monthlyHtml(rows) {
-  return htmlTable(['月份', 'MOM基准月份', '环比基准月份', 'SKU数', '销量', '销售额($)', 'SKU平均标价', '加权成交均价', 'MOM销量', 'MOM销售额', 'MOM标价', 'MOM成交均价', '环比销量', '环比销售额'],
-    rows.map((r) => [fmtMonth(r.month), r.momBasis ? fmtMonth(r.momBasis) : '-', r.chainBasis ? fmtMonth(r.chainBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2), fmtPct(r.momSales), fmtPct(r.momRevenue), fmtPct(r.momAvgListPrice), fmtPct(r.momWeightedPrice), fmtPct(r.chainSales), fmtPct(r.chainRevenue)]));
+  return htmlTable(['月份', 'MOM/环比基准月份', 'SKU数', '销量', '销售额($)', 'SKU平均标价', '加权成交均价', 'MOM/环比销量', 'MOM/环比销售额', 'MOM/环比标价', 'MOM/环比成交均价'],
+    rows.map((r) => [fmtMonth(r.month), r.momBasis ? fmtMonth(r.momBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2), fmtPct(r.momSales), fmtPct(r.momRevenue), fmtPct(r.momAvgListPrice), fmtPct(r.momWeightedPrice)]));
 }
 function overallMarketTrendHtml(rows) {
-  return htmlTable(['月份', '口径状态', 'MOM基准月份', '环比基准月份', 'Listing数', '销量', '销售额($)', 'SKU平均标价', '加权成交均价', 'MOM销量', 'MOM销售额', '环比销量', '环比销售额'],
-    rows.map((row) => [fmtMonth(row.month), row.scopeStatus, row.momBasis ? fmtMonth(row.momBasis) : '-', row.chainBasis ? fmtMonth(row.chainBasis) : '-', fmt(row.skuCount), fmt(row.sales), fmt(row.revenue), fmt(row.avgListPrice, 2), fmt(row.weightedPrice, 2), mergedTrendPct(row, 'momSales'), mergedTrendPct(row, 'momRevenue'), mergedTrendPct(row, 'chainSales'), mergedTrendPct(row, 'chainRevenue')]));
+  return htmlTable(['月份', '口径状态', 'MOM/环比基准月份', 'Listing数', '销量', '销售额($)', 'SKU平均标价', '加权成交均价', 'MOM/环比销量', 'MOM/环比销售额'],
+    rows.map((row) => [fmtMonth(row.month), row.scopeStatus, row.momBasis ? fmtMonth(row.momBasis) : '-', fmt(row.skuCount), fmt(row.sales), fmt(row.revenue), fmt(row.avgListPrice, 2), fmt(row.weightedPrice, 2), mergedTrendPct(row, 'momSales'), mergedTrendPct(row, 'momRevenue')]));
 }
 function annualHtml(rows) {
   return htmlTable(['年份/数据周期', 'YoY比较周期', '销量', '销售额($)', 'SKU平均标价', '加权成交均价', 'YOY销量', 'YOY销售额', 'YOY标价', 'YOY成交均价', '同比范围一致性'],
@@ -908,11 +901,11 @@ function annualHtml(rows) {
 }
 
 function segmentHtml(rows) {
-  const hasGap = rows.some((r) => r.momGapReason || r.chainGapReason);
-  const table = htmlTable(['月份', '小类BSR分层', 'MOM基准月份', '环比基准月份', 'SKU数', '销量', '销售额($)', '加权成交均价', 'MOM销量', 'MOM销售额', 'MOM成交均价', '环比销量', '环比销售额'],
-    rows.map((r) => [fmtMonth(r.month), r.segment, r.momBasis ? fmtMonth(r.momBasis) : '-', r.chainBasis ? fmtMonth(r.chainBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2), segPct(r, 'momSales', 'momGapReason'), segPct(r, 'momRevenue', 'momGapReason'), segPct(r, 'momWeightedPrice', 'momGapReason'), segPct(r, 'chainSales', 'chainGapReason'), segPct(r, 'chainRevenue', 'chainGapReason')]));
+  const hasGap = rows.some((r) => r.momGapReason);
+  const table = htmlTable(['月份', '小类BSR分层', 'MOM/环比基准月份', 'SKU数', '销量', '销售额($)', '加权成交均价', 'MOM/环比销量', 'MOM/环比销售额', 'MOM/环比成交均价'],
+    rows.map((r) => [fmtMonth(r.month), r.segment, r.momBasis ? fmtMonth(r.momBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2), segPct(r, 'momSales', 'momGapReason'), segPct(r, 'momRevenue', 'momGapReason'), segPct(r, 'momWeightedPrice', 'momGapReason')]));
   return table + (hasGap
-    ? '<p class="note">*无对应数据：基准月/上月该分层为空（0条Listing），同/环比无法计算。整体市场与高客单的 2026.05 中部/尾部 MOM、2025.06 中部/尾部环比缺失源于 2025.05 源数据小类BSR同值重复（详见一、口径说明）；GENIMO 部分月份分层无在榜商品属正常稀疏。</p>'
+    ? '<p class="note">*无对应数据：跨年同月基准分层为空（0条Listing），MOM/环比无法计算。整体市场与高客单的 2026.05 中部/尾部缺失源于 2025.05 源数据小类BSR同值重复（详见一、口径说明）；GENIMO 部分月份分层无在榜商品属正常稀疏。</p>'
     : '');
 }
 function annualSegmentsHtml(rows) {
@@ -973,7 +966,7 @@ const quickMd = [
   '## 结论摘要', '',
   `- 2026.01-06父体级快照：整体销量 ${fmt(insight.overall2026.sales)}、销售额 $${fmt(insight.overall2026.revenue)}；相对2025同期行级导出的方向变化为 ${fmtPct(insight.overall2026.yoySales)} / ${fmtPct(insight.overall2026.yoyRevenue)}。`,
   `- PP贡献2026.01-06整体销量 ${fmt(insight.ppSalesShare2026, 1)}%、销售额 ${fmt(insight.ppRevenueShare2026, 1)}%；GENIMO占PP销量/销售额 ${fmt(insight.genimoPpShare2026, 2)}% / ${fmt(insight.genimoPpRevenueShare2026, 2)}%。`,
-  `- 同口径连续月观察：2026.06整体销量 ${fmt(categories.overall.monthly.find((row) => row.month === '202606').sales)}，环比 ${fmtPct(categories.overall.monthly.find((row) => row.month === '202606').chainSales)}，为核心期峰值。`,
+  `- 2026.06整体销量 ${fmt(categories.overall.monthly.find((row) => row.month === '202606').sales)}，为核心期峰值；该峰值用于安排2027旺季前4-8周的补货、广告与新品测试。`,
   '- 2026.07仅94父体，是小范围样本；已合并展示，但不参与同比、环比、累计或核心结论。', '',
   '## 必须同时阅读的限制', '',
   '- 2025为无ASIN的行级导出（含变体行），2026为父ASIN去重快照；跨年百分比只表示方向，不是严格同口径同比。',
@@ -981,7 +974,7 @@ const quickMd = [
   '- 2026代表行规则：同父体先取最小可解析小类BSR；同名次优先销量/销售额字段完整行，再按源表顺序稳定决胜；不合计子体。',
   '- SKU平均标价排除空值和不可解析值；销量加权成交均价=销售额/销量。', '',
   '## 建议', '',
-  '1. 以2026同口径连续月趋势安排旺季前4-8周补货与投放，不用跨口径百分比反推精确市场增长率。',
+  '1. 以2026同口径月度趋势安排旺季前4-8周补货与投放，不用跨口径百分比反推精确市场增长率。',
   '2. 保持PP流量盘，同时用非PP高客单产品修复销售额和价格结构。',
   '3. GENIMO采用“1个头部锚点 + 3-5个中部利润层 + 4-8个尾部测试池”，按完整报告中的毛利、TACOS、BSR和库存门槛晋级或退出。', '',
   '4. 工艺或包装改动（如包边、包装袋或地钉）先在低风险颜色或4x6/5x8小批量验证；保留批次标记，跟踪散边、卷边、破损和退货原因，累计300-500单后再决定扩大，8x10、9x12及超大尺寸暂保留稳定边缘处理。', '',
@@ -1001,6 +994,17 @@ let htmlOutput = html
   .replace(/<strong>\d{6} — \d{6}<\/strong>/, `<strong>${fmtMonth(analysisMonths[0])} — ${fmtMonth(analysisMonths[analysisMonths.length - 1])}</strong>`)
   .replace('</main></div></div><script>', coverageHtml + '</main></div></div><script>')
   .replace(/<section id="insights">[\s\S]*?<\/section>/, cohortHtml + genimoProductsHtml + insightHtml + forecastHtml + referenceHtml)
+  // insightHtml 是历史长模板，最终渲染前再做一次口径清理，确保连续环比不进入交付 HTML。
+  .replace('；2026月度环比保持父体口径一致。', '；月度MOM/环比统一采用跨年同月基准。')
+  .replace(/、环比 -，为核心期峰值；/g, '、为核心期峰值；')
+  .replace(/，环比 -，为核心期峰值；/g, '，为核心期峰值；')
+  .replace(/，月度环比 - \/ -；/g, '；')
+  .replace(/月度MOM（用户口径）=今年X月 vs 去年X月同月；月度环比=本月 vs 上月。两种比较在全部月度表分别显示基准月份。/g, '月度MOM/环比（用户口径）=今年X月 vs 去年X月同月；本次不计算或展示本月 vs 上月的连续环比。')
+  .replace(/月度MOM（用户口径）= 今年X月 vs 去年X月同月（如 2025\.01 vs 2024\.01）；月度环比 = 本月 vs 上月；年度YOY = 年度同周期对比。/g, '月度MOM/环比（用户口径）= 今年X月 vs 去年X月同月（如 2025.01 vs 2024.01）；本次不计算或展示本月 vs 上月的连续环比；年度YOY = 年度同周期对比。')
+  .replace(/用户定义MOM与月度环比/g, '用户定义MOM/环比')
+  .replace('整体月度MOM与环比', '整体月度MOM/环比')
+  .replace('所有月度表分别显示MOM/环比基准月份', '所有月度表显示跨年同月MOM/环比基准月份')
+  .replace('各分类 BSR Top100月度、年度表', '各分类 BSR Top100月度、年度表（仅跨年同月MOM/环比）')
   .replace('</style></head>', '<style>.trend-body{padding:10px 0 2px;color:var(--muted)}.trend-body p{margin:7px 0;font-size:14px}.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.insight-grid article{padding:15px;border:1px solid var(--line);background:var(--surface-soft)}.insight-grid h3{margin:0 0 7px}.insight-grid p{margin:0;color:var(--muted);font-size:14px}.chart-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.chart-card{min-width:0;margin:0;padding:14px;border:1px solid var(--line);background:var(--surface-soft)}.chart-card figcaption{display:flex;flex-direction:column}.chart-card figcaption span{color:var(--muted);font-size:12px}.chart-card svg{display:block;width:100%;height:auto;margin-top:10px;overflow:visible}.chart-card text{fill:var(--muted);font:12px var(--mono)}.chart-axis{stroke:var(--line-strong)}.chart-line{fill:none;stroke:var(--text);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.chart-card circle{fill:var(--surface);stroke:var(--text);stroke-width:2}@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}}@media(max-width:700px){.insight-grid{grid-template-columns:1fr}}</style></head>');
 
 fs.mkdirSync(path.dirname(HTML_PATH), { recursive: true });

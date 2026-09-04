@@ -85,7 +85,6 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
     const index = byMonth(rows);
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex];
-      const previous = rows[rowIndex - 1];
       const priorMonth = String(Number(row.month.slice(0, 4)) - 1) + row.month.slice(4);
       const prior = index.get(priorMonth);
       if (prior) {
@@ -98,15 +97,12 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
         check(category + ' ' + collectionName + ' missing MOM basis remains null', false, 'month=' + row.month);
         break;
       }
-      if (previous) {
-        if (row.chainBasis !== previous.month || !close(row.chainSales, pct(row.sales, previous.sales))
-          || !close(row.chainRevenue, pct(row.revenue, previous.revenue))) {
-          check(category + ' ' + collectionName + ' chain formulas', false, 'month=' + row.month);
-          break;
-        }
+      if (Object.keys(row).some((key) => key.startsWith('chain'))) {
+        check(category + ' ' + collectionName + ' has no obsolete chain fields', false, 'month=' + row.month);
+        break;
       }
       if (rowIndex === rows.length - 1) {
-        check(category + ' ' + collectionName + ' MOM/chain formulas', true);
+        check(category + ' ' + collectionName + ' cross-year MOM/环比 formulas', true);
       }
     }
   }
@@ -191,9 +187,9 @@ for (const row of data.overallMarketTrend2026.filter((item) => item.month <= '20
   if (!source || !row.coreComparable || row.skuCount !== source.skuCount
     || !close(row.sales, source.sales) || !close(row.revenue, source.revenue)
     || !close(row.avgListPrice, source.avgListPrice) || !close(row.weightedPrice, source.weightedPrice)
-    || row.momBasis !== source.momBasis || row.chainBasis !== source.chainBasis
+    || row.momBasis !== source.momBasis
     || !close(row.momSales, source.momSales) || !close(row.momRevenue, source.momRevenue)
-    || !close(row.chainSales, source.chainSales) || !close(row.chainRevenue, source.chainRevenue)) {
+    || Object.keys(row).some((key) => key.startsWith('chain'))) {
     mergedTrendReconciles = false;
     break;
   }
@@ -204,9 +200,9 @@ const julyDiagnostic = data.sourceDiagnostics.find((row) => row.month === '20260
 check('merged July trend reconciles to source and blocks cross-caliber deltas', julyTrend && julyDiagnostic
   && julyTrend.coreComparable === false && julyTrend.skuCount === 94
   && close(julyTrend.sales, julyDiagnostic.sales) && close(julyTrend.revenue, julyDiagnostic.revenue)
-  && julyTrend.momBasis === null && julyTrend.chainBasis === null
+  && julyTrend.momBasis === null
   && julyTrend.momSales === null && julyTrend.momRevenue === null
-  && julyTrend.chainSales === null && julyTrend.chainRevenue === null
+  && !Object.keys(julyTrend).some((key) => key.startsWith('chain'))
   && julyTrend.scopeStatus.includes('不参与同比/环比和累计'));
 for (const [name, output] of [['Markdown', markdown], ['HTML', html]]) {
   check(name + ' merges Jan-Jul trend and has no separate July appendix', output.includes('2026.01-07整体市场趋势（合并展示）')
@@ -223,8 +219,8 @@ check('202605 mid/tail MOM basis=202505 is null with gap reason',
   mayGap.length === 2
   && mayGap.every((r) => r.momBasis === '202505' && r.momSales === null && r.momRevenue === null
     && Boolean(r.momGapReason) && r.momGapReason.includes('202505')));
-check('202605 mid/tail chain (vs 202604) still computed',
-  mayGap.every((r) => r.chainBasis === '202604' && r.chainSales !== null && r.chainRevenue !== null && !r.chainGapReason));
+check('202605 mid/tail have no obsolete chain fields',
+  mayGap.every((r) => !Object.keys(r).some((key) => key.startsWith('chain'))));
 check('gap reason only when basis segment is empty',
   overallGroups.filter((r) => r.momGapReason && (r.momSales !== null || r.momRevenue !== null)).length === 0
   && overallGroups.filter((r) => !r.momGapReason && r.momBasis && r.momSales === null).length === 0);
@@ -239,10 +235,16 @@ check('202601 overall uses new full-market snapshot (1134 listings)', overall.ge
 const benchmark = overall.get('202602');
 check('202602 overall benchmark MOM sales ≈ -14.8%', close(benchmark.momSales, -14.8, 0.1), benchmark.momSales.toFixed(3));
 check('202602 overall benchmark MOM revenue ≈ -20.5%', close(benchmark.momRevenue, -20.5, 0.1), benchmark.momRevenue.toFixed(3));
-check('202602 overall benchmark chain sales ≈ +9.6%', close(benchmark.chainSales, 9.6, 0.1), benchmark.chainSales.toFixed(3));
-check('202602 overall benchmark chain revenue ≈ +23.8%', close(benchmark.chainRevenue, 23.8, 0.1), benchmark.chainRevenue.toFixed(3));
-check('202602 benchmark basis months are explicit and correct', benchmark.momBasis === '202502'
-  && benchmark.chainBasis === '202601');
+check('202602 has no obsolete chain comparison', !Object.keys(benchmark).some((key) => key.startsWith('chain')));
+check('202602 benchmark basis month is explicit and correct', benchmark.momBasis === '202502');
+const marchBenchmark = overall.get('202603');
+check('202603 uses 202503 cross-year MOM and excludes prior-month +120.5/+94.7', marchBenchmark.momBasis === '202503'
+  && close(marchBenchmark.momSales, pct(marchBenchmark.sales, overall.get('202503').sales))
+  && close(marchBenchmark.momRevenue, pct(marchBenchmark.revenue, overall.get('202503').revenue))
+  && !Object.keys(marchBenchmark).some((key) => key.startsWith('chain'))
+  && !markdown.includes('| 2026.03 | 2025.03 | 1,766 | 252,620 | 12,968,763 | 64.93 | 51.34 | +120.5%')
+  && !markdown.includes('| 2026.03 | 2025.03 | 1,766 | 252,620 | 12,968,763 | 64.93 | 51.34 | +1.9% | -17.7% | -13.9% | -19.2% | +120.5%'),
+  'basis=' + marchBenchmark.momBasis + ' mom=' + marchBenchmark.momSales.toFixed(3) + '/' + marchBenchmark.momRevenue.toFixed(3));
 
 check('PP independent listing details cover 202601-202606', data.ppListingDetailsPeriod === '202601-202606'
   && data.ppListingDetails.length > 0
@@ -314,8 +316,7 @@ for (const [name, output] of [['Markdown', markdown], ['HTML', html]]) {
     && output.includes('GENIMO 2026.01-06累计Top父体')
     && !output.includes('2025年PP销量份额'));
   check(name + ' has no obsolete 64-94 monthly caliber claim', !output.includes('2026年数据源已切换为竞品父ASIN去重口径（64-94父商品/月）'));
-  check(name + ' visibly discloses MOM and chain basis months', output.includes('MOM基准月份')
-    && output.includes('环比基准月份'));
+  check(name + ' visibly discloses one cross-year MOM/环比 basis month', output.includes('MOM/环比基准月份'));
   check(name + ' visibly exposes replacement trace', output.includes('2026数据替换审计记录')
     && data.replacementMetadata.every((row) => output.includes(row.source_sha256)));
   check(name + ' visibly exposes BSR multi-value audit', output.includes('BSR多值解析审计'));

@@ -78,9 +78,8 @@ function parseTables(htmlText) {
 }
 const tables = parseTables(html);
 function monthlyRows(rows) {
-  return rows.map((r) => [fmtMonth(r.month), r.momBasis ? fmtMonth(r.momBasis) : '-', r.chainBasis ? fmtMonth(r.chainBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2),
-    fmtPct(r.momSales), fmtPct(r.momRevenue), fmtPct(r.momAvgListPrice), fmtPct(r.momWeightedPrice),
-    fmtPct(r.chainSales), fmtPct(r.chainRevenue)]);
+  return rows.map((r) => [fmtMonth(r.month), r.momBasis ? fmtMonth(r.momBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2),
+    fmtPct(r.momSales), fmtPct(r.momRevenue), fmtPct(r.momAvgListPrice), fmtPct(r.momWeightedPrice)]);
 }
 function annualRows(rows) {
   return rows.map((r) => [r.year + ' (' + fmtPeriod(r.period) + ')', r.comparison ? fmtPeriod(r.comparison) : '-', fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2),
@@ -88,20 +87,17 @@ function annualRows(rows) {
     scopeLabel(r)]);
 }
 function segmentRows(rows) {
-  return rows.map((r) => [fmtMonth(r.month), r.segment, r.momBasis ? fmtMonth(r.momBasis) : '-', r.chainBasis ? fmtMonth(r.chainBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2),
-    segPct(r, 'momSales', 'momGapReason'), segPct(r, 'momRevenue', 'momGapReason'), segPct(r, 'momWeightedPrice', 'momGapReason'),
-    segPct(r, 'chainSales', 'chainGapReason'), segPct(r, 'chainRevenue', 'chainGapReason')]);
+  return rows.map((r) => [fmtMonth(r.month), r.segment, r.momBasis ? fmtMonth(r.momBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2),
+    segPct(r, 'momSales', 'momGapReason'), segPct(r, 'momRevenue', 'momGapReason'), segPct(r, 'momWeightedPrice', 'momGapReason')]);
 }
 function annualSegmentsRows(rows) {
   return rows.map((r) => [r.year + ' (' + fmtPeriod(r.period) + ')', r.segment, r.comparison ? fmtPeriod(r.comparison) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.weightedPrice, 2),
     fmtPct(r.yoySales), fmtPct(r.yoyRevenue), fmtPct(r.yoyWeightedPrice), scopeLabel(r)]);
 }
 function overallTrendRows(rows) {
-  return rows.map((r) => [fmtMonth(r.month), r.scopeStatus, r.momBasis ? fmtMonth(r.momBasis) : '-', r.chainBasis ? fmtMonth(r.chainBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2),
+  return rows.map((r) => [fmtMonth(r.month), r.scopeStatus, r.momBasis ? fmtMonth(r.momBasis) : '-', fmt(r.skuCount), fmt(r.sales), fmt(r.revenue), fmt(r.avgListPrice, 2), fmt(r.weightedPrice, 2),
     r.coreComparable ? fmtPct(r.momSales) : '不适用（口径不同）',
-    r.coreComparable ? fmtPct(r.momRevenue) : '不适用（口径不同）',
-    r.coreComparable ? fmtPct(r.chainSales) : '不适用（口径不同）',
-    r.coreComparable ? fmtPct(r.chainRevenue) : '不适用（口径不同）']);
+    r.coreComparable ? fmtPct(r.momRevenue) : '不适用（口径不同）']);
 }
 function extractConst(name) {
   const m = src.match(new RegExp('const ' + name + ' = \\[([\\s\\S]*?)\\];', 'm'));
@@ -180,10 +176,10 @@ function trendAnalysis(c, category, label) {
   if (top2026 && annual2026) out.push('- 2026.01-06 BSR前100贡献销量 ' + fmt(top2026.sales) + '（占同期' + fmt(top2026.sales / annual2026.sales * 100, 1) + '%），销售额占比 ' + fmt(top2026.revenue / annual2026.revenue * 100, 1) + '%；相对2025行代理池的销量/销售额方向变化为 ' + fmtPct(top2026.yoySales) + ' / ' + fmtPct(top2026.yoyRevenue) + '。');
   if (groupLine) out.push('- 2026.01-06头中尾分层：' + groupLine + '。');
   if (benchmark) {
-    const expected = category === 'overall' ? '（整体市场全量快照复核值约 -14.8% / -20.5% / +9.6% / +23.8%）' : '';
-    out.push('- ' + fmtMonth(benchmark.month) + '：跨年同月方向变化（报告MOM口径）销量 ' + fmtPct(benchmark.momSales) + '、销售额 ' + fmtPct(benchmark.momRevenue) + '；同为父体口径的月度环比（本月vs上月）销量 ' + fmtPct(benchmark.chainSales) + '、销售额 ' + fmtPct(benchmark.chainRevenue) + expected + '。');
+    const expected = category === 'overall' ? '（整体市场全量快照复核值约 -14.8% / -20.5%）' : '';
+    out.push('- ' + fmtMonth(benchmark.month) + '：月度MOM/环比按跨年同月口径（' + fmtMonth(benchmark.month) + ' vs ' + fmtMonth(benchmark.momBasis) + '）销量 ' + fmtPct(benchmark.momSales) + '、销售额 ' + fmtPct(benchmark.momRevenue) + expected + '。');
   }
-  if (baseline && baseline.month !== '202602') out.push('- 2026核心截止月 ' + fmtMonth(baseline.month) + '：跨年同月方向变化销量 ' + fmtPct(baseline.momSales) + '、销售额 ' + fmtPct(baseline.momRevenue) + '；同为父体口径的月度环比（本月vs上月）销量 ' + fmtPct(baseline.chainSales) + '、销售额 ' + fmtPct(baseline.chainRevenue) + '。');
+  if (baseline && baseline.month !== '202602') out.push('- 2026核心截止月 ' + fmtMonth(baseline.month) + '：月度MOM/环比按跨年同月口径（' + fmtMonth(baseline.month) + ' vs ' + fmtMonth(baseline.momBasis) + '）销量 ' + fmtPct(baseline.momSales) + '、销售额 ' + fmtPct(baseline.momRevenue) + '。');
   if (peak2026) out.push('- 2026.01-06核心月份中，' + fmtMonth(peak2026.month) + '销量最高，为 ' + fmt(peak2026.sales) + ' 件；该峰值用于安排2027旺季前4-8周的补货、广告与新品测试。');
   const scopeAnchor = c.monthly.find((row) => row.month === '202604');
   if (scopeAnchor && baseline) out.push('- 口径提示：2026.01-06为全市场父体级快照（每月1038-1993个父体），2025为无ASIN的行级导出（每月1683-2000行，含变体行）。两者量级接近不等于统计单元一致，跨年变化仅作方向性参考；2026.07为94父体小样本，只合并展示，不参与同比、环比和累计。');
@@ -288,10 +284,13 @@ check('HTML 无 NaN/undefined/Infinity 等异常标记', badArtifacts.length ===
 // ============ Phase 4: 硬编码文本与数据一致性 ============
 const overall = data.categories.overall;
 const b202602 = overall.monthly.find((r) => r.month === '202602');
-check('全量快照复核文案与 JSON 一致', html.includes('整体市场全量快照复核值约 -14.8% / -20.5% / +9.6% / +23.8%')
+check('全量快照复核文案与 JSON 一致', html.includes('整体市场全量快照复核值约 -14.8% / -20.5%')
   && Math.abs(b202602.momSales - (-14.8)) < 0.11 && Math.abs(b202602.momRevenue - (-20.5)) < 0.11
-  && Math.abs(b202602.chainSales - 9.6) < 0.11 && Math.abs(b202602.chainRevenue - 23.8) < 0.11,
-  'json=' + b202602.momSales.toFixed(1) + '/' + b202602.momRevenue.toFixed(1) + '/' + b202602.chainSales.toFixed(1) + '/' + b202602.chainRevenue.toFixed(1));
+  && !Object.keys(b202602).some((key) => key.startsWith('chain')),
+  'json=' + b202602.momSales.toFixed(1) + '/' + b202602.momRevenue.toFixed(1));
+check('2026.03 不展示旧连续环比 +120.5%/+94.7%', !html.includes('2026.03 vs 2026.02')
+  && !html.includes('2026.03</td><td>2025.03</td><td>1,766</td><td>252,620</td><td>12,968,763</td><td>64.93</td><td>51.34</td><td>+1.9%</td><td>-17.7%</td><td>-13.9%</td><td>-19.2%</td><td>+120.5%')
+  && !html.includes('2026.03</td><td>2025.03</td><td>1,766</td><td>252,620</td><td>12,968,763</td><td>64.93</td><td>51.34</td><td>+1.9%</td><td>-17.7%</td><td>-13.9%</td><td>-19.2%</td><td>+94.7%'));
 const h202505 = overall.bsrGroups.monthly.find((r) => r.month === '202505' && r.segment === '头部（1-20）');
 check('2025.05 头部口径说明数字与 JSON 一致', html.includes('162,797') && html.includes('6,446,797') && html.includes('39.60')
   && h202505.sales === 162797 && h202505.revenue === 6446797 && Math.abs(h202505.weightedPrice - 39.6) < 0.01);
@@ -313,8 +312,8 @@ check('2026.05 中部/尾部 MOM 无对应数据披露存在', (html.match(/无�
 const julyTrend = data.overallMarketTrend2026.find((r) => r.month === '202607');
 check('2026.01-07合并趋势存在且July跨口径值禁算', html.includes('2026.01-07整体市场趋势（合并展示）')
   && html.includes('94父体小样本；合并展示，不参与同比/环比和累计')
-  && (html.match(/不适用（口径不同）/g) || []).length === 4
-  && julyTrend && julyTrend.coreComparable === false && julyTrend.momSales === null && julyTrend.chainSales === null
+  && (html.match(/不适用（口径不同）/g) || []).length === 2
+  && julyTrend && julyTrend.coreComparable === false && julyTrend.momSales === null && !Object.keys(julyTrend).some((key) => key.startsWith('chain'))
   && !html.includes('2026.07附录/参考') && !html.includes('参考附录'));
 // Cohort 段落与 JSON 一致
 let cohortMismatch = 0;
@@ -349,8 +348,8 @@ check('202607 为合并展示但不进入核心', data.sourceMonths.includes('20
   && data.overallMarketTrend2026.length === 7 && data.overallMarketTrend2026.at(-1).coreComparable === false);
 check('replacementMetadata=7 且含 sha256', data.replacementMetadata.length === 7 && data.replacementMetadata.every((r) => /^[0-9a-f]{64}$/.test(r.source_sha256 || '')));
 check('替换元数据逐月显示在HTML', data.replacementMetadata.every((row) => html.includes(row.source_sha256) && html.includes(fmtMonth(row.month))));
-check('全部月度表显示MOM/环比基准月份', html.includes('MOM基准月份') && html.includes('环比基准月份')
-  && (html.match(/MOM基准月份/g) || []).length >= 13 && (html.match(/环比基准月份/g) || []).length >= 13);
+check('全部月度表显示唯一跨年MOM/环比基准月份', html.includes('MOM/环比基准月份')
+  && !html.includes('环比基准月份（上月）'));
 check('PP独立Listing明细完整', data.ppListingDetails.length > 0
   && data.ppListingDetails.every((row) => row.month >= '202601' && row.month <= '202606' && row.listingKey)
   && html.includes('PP独立Listing明细（2026.06'));
