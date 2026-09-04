@@ -49,6 +49,29 @@ function tableName(sheetName) {
   return top[sheetName] || (normMonth(sheetName) ? 'monthly_' + normMonth(sheetName) : null);
 }
 
+// ASIN/父ASIN cells in the source workbooks are rich-text hyperlinks.  Their
+// displayed value is stored in cell.l.display (or rich-text cell.r) while
+// cell.v is intentionally empty; verification must compare the displayed
+// value that the importer persists, not the empty formula value.
+function decodeXmlEntities(value) {
+  return String(value)
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
+}
+function cellDisplayValue(cell) {
+  if (!cell) return null;
+  if (cell.v !== undefined && cell.v !== null && cell.v !== '') return cell.v;
+  if (cell.l && cell.l.display !== undefined && cell.l.display !== '') return cell.l.display;
+  if (cell.r) {
+    const text = decodeXmlEntities(String(cell.r).replace(/<[^>]*>/g, '')).trim();
+    if (text) return text;
+  }
+  if (cell.w !== undefined && cell.w !== null && cell.w !== '') return cell.w;
+  return cell.v === undefined ? null : cell.v;
+}
+
 function detectHeaderRow(sheet, isTop = false) {
   if (isTop) return 0;
   if (!sheet || !sheet['!ref']) return -1;
@@ -57,7 +80,7 @@ function detectHeaderRow(sheet, isTop = false) {
     const values = [];
     for (let column = range.s.c; column <= range.e.c; column++) {
       const cell = sheet[xlsx.utils.encode_cell({ r: row, c: column })];
-      values.push(cell && cell.v);
+      values.push(cellDisplayValue(cell));
     }
     if (values.includes('品牌') && values.includes('商品标题') && values.includes('月销量')) return row;
   }
@@ -89,7 +112,7 @@ function excelSamples(sheetName, sheet) {
     const values = [];
     for (let column = range.s.c; column <= range.e.c; column++) {
       const cell = sheet[xlsx.utils.encode_cell({ r: row, c: column })];
-      values.push(cell ? cell.v : null);
+      values.push(cellDisplayValue(cell));
     }
     return values;
   });

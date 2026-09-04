@@ -108,7 +108,7 @@ const FORECAST_2026_Q4 = extractConst('FORECAST_2026_Q4');
 const FORECAST_2027_MONTHLY = extractConst('FORECAST_2027_MONTHLY');
 const FORECAST_2027_SCENARIOS = extractConst('FORECAST_2027_SCENARIOS');
 const expectedTables = [];
-expectedTables.push(data.dataQuality.historicalBsrTop100Quality.map((row) => [fmtMonth(row.month), fmt(row.eligibleRows), fmt(row.selectedRows), fmt(row.identifierCoveragePct, 1) + '%', fmt(row.distinctRanks), fmt(row.repeatedRankRows), row.statisticalUnit]));
+expectedTables.push(data.dataQuality.historicalBsrTop100Quality.map((row) => [fmtMonth(row.month), fmt(row.eligibleRows), fmt(row.selectedRows), fmt(row.identifierCoveragePct, 1) + '%', fmt(row.distinctListingKeys), fmt(row.duplicateListingRows), fmt(row.distinctRanks), fmt(row.repeatedRankRows), row.statisticalUnit]));
 expectedTables.push(data.dataQuality.bsrMultiValueAudit.map((row) => [row.category, fmtMonth(row.month), row.listingKey || '-', row.parent || '-', row.asin || '-', fmt(row.rank), String(row.sourceBsr || '-').replace(/\s+/g, ' ').trim(), '是']));
 for (const cat of ['overall', 'pp', 'high', 'genimo']) {
   const c = data.categories[cat];
@@ -190,7 +190,7 @@ function trendAnalysis(c, category, label) {
   if (baseline && baseline.month !== '202602') out.push('- 2026核心截止月 ' + fmtMonth(baseline.month) + '：月度MOM/环比按跨年同月口径（' + fmtMonth(baseline.month) + ' vs ' + fmtMonth(baseline.momBasis) + '）销量 ' + fmtPct(baseline.momSales) + '、销售额 ' + fmtPct(baseline.momRevenue) + '。');
   if (peak2026) out.push('- 2026.01-06核心月份中，' + fmtMonth(peak2026.month) + '销量最高，为 ' + fmt(peak2026.sales) + ' 件；该峰值用于安排2027旺季前4-8周的补货、广告与新品测试。');
   const scopeAnchor = c.monthly.find((row) => row.month === '202604');
-  if (scopeAnchor && baseline) out.push('- 口径提示：2026.01-06为全市场父体级快照（每月1038-1993个父体），2025为无ASIN的行级导出（每月1683-2000行，含变体行）。两者量级接近不等于统计单元一致，跨年变化仅作方向性参考；2026.07为94父体小样本，只合并展示，不参与同比、环比和累计。');
+  if (scopeAnchor && baseline) out.push('- 口径提示：2026.01-06为全市场父体级快照（每月1038-1993个父体），2025为含ASIN/父ASIN的行级导出（每月1683-2000行，含变体行）。两者量级接近不等于统计单元一致，跨年变化仅作方向性参考；2026.07为94父体小样本，只合并展示，不参与同比、环比和累计。');
   return out.join('\n');
 }
 const labels = { overall: '整体市场', pp: 'PP塑料地垫（标题完整单词 plastic）', high: '非PP高客单产品', genimo: 'GENIMO品牌' };
@@ -265,7 +265,7 @@ for (const y of ['2022', '2023', '2024', '2025', '2026', '2027', '2028']) expect
 for (const s of ['-14.8%', '-20.5%', '+9.6%', '+23.8%', '-27.7%', '-0.1%', '+9.3%', '+33.5%']) expectedSet.add(s);
 for (const s of ['1,831,843', '1,781,765', '1,121,130', '1,066,818', '+2.8%', '+5.1%', '2.8106%', '5.0910%']) expectedSet.add(s);
 for (const s of ['1038', '1993', '1683', '2000', '1134', '1039', '1766', '1744', '1690', '1135', '1745', '1691', '2002', '3000', '94']) expectedSet.add(s);
-for (const s of ['112', '125', '156', '153', '100', '162,797', '6,446,797', '39.60', '49', '54', '71,451', '4,261,173', '73,812', '160', '144', '53', '107', '91', '65']) expectedSet.add(s);
+for (const s of ['112', '125', '156', '153', '100', '49', '54', '71,451', '4,261,173', '73,812', '160', '144', '53', '107', '91', '65']) expectedSet.add(s);
 for (const s of ['56.6%', '20.86%', '27.03%', '1,734,909', '$98.9M', '$98.9', '-14.7%', '-20.1%', '$57.0M', '-15.2%', '-26.4%', '$41.9M', '-9.7%', '$16.3M', '+10.7%', '+83.0%', '+65.2%']) expectedSet.add(s);
 // Plan-reference workbook figures are intentionally disclosed in the
 // provenance section but are not part of market.db JSON metrics.
@@ -310,8 +310,11 @@ check('2026.03 不展示旧连续环比 +120.5%/+94.7%', !html.includes('2026.03
   && !html.includes('2026.03</td><td>2025.03</td><td>1,766</td><td>252,620</td><td>12,968,763</td><td>64.93</td><td>51.34</td><td>+1.9%</td><td>-17.7%</td><td>-13.9%</td><td>-19.2%</td><td>+120.5%')
   && !html.includes('2026.03</td><td>2025.03</td><td>1,766</td><td>252,620</td><td>12,968,763</td><td>64.93</td><td>51.34</td><td>+1.9%</td><td>-17.7%</td><td>-13.9%</td><td>-19.2%</td><td>+94.7%'));
 const h202505 = overall.bsrGroups.monthly.find((r) => r.month === '202505' && r.segment === '头部（1-20）');
-check('2025.05 头部口径说明数字与 JSON 一致', html.includes('162,797') && html.includes('6,446,797') && html.includes('39.60')
-  && h202505.sales === 162797 && h202505.revenue === 6446797 && Math.abs(h202505.weightedPrice - 39.6) < 0.01);
+check('2025.05 头部口径说明数字与 JSON 一致', Boolean(h202505)
+  && html.includes('ASIN/父ASIN为富文本超链接')
+  && html.includes('销量' + fmt(h202505.sales))
+  && html.includes('销售额$' + fmt(h202505.revenue))
+  && html.includes('加权均价$' + fmt(h202505.weightedPrice, 2)));
 const sku26 = overall.monthly.filter((r) => r.month >= '202601' && r.month <= '202606').map((r) => r.skuCount);
 const sku25 = overall.monthly.filter((r) => r.month >= '202501' && r.month <= '202512').map((r) => r.skuCount);
 check('口径范围文本与 JSON 一致 (2026:1038-1993, 2025:1683-2000)',
@@ -389,7 +392,9 @@ check('2026 年度同周期但scopeComparable=false，且带方向性限制', ['
   return a && a.timeComparable === true && a.scopeComparable === false && a.scopeNote.includes('不构成严格同口径同比');
 }));
 check('历史BSR质量诊断完整', data.dataQuality.historicalBsrTop100Quality.length === 43
-  && data.dataQuality.historicalBsrTop100Quality.every((row) => row.identifierCoveragePct === 0 && row.strictListingPool === false));
+  && data.dataQuality.historicalBsrTop100Quality.every((row) => row.identifierCoveragePct === 100
+    && row.strictListingPool === false && Number.isFinite(row.distinctListingKeys)
+    && Number.isFinite(row.duplicateListingRows)));
 check('HTML有3张可访问趋势图', (html.match(/<figure class="chart-card">/g) || []).length === 3
   && (html.match(/<svg /g) || []).length === 3 && (html.match(/role="img"/g) || []).length === 3);
 check('HTML预测表含4个销量区间', FORECAST_2026_Q4.every((row) => row.range && html.includes(row.range)));

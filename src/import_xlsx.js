@@ -58,6 +58,36 @@ function parseNum(v) {
   return isNaN(n) ? null : n;
 }
 
+// Excel exports in this project store many ASIN/parent-ASIN cells as rich
+// text with a hyperlink. SheetJS exposes cell.v as an empty string in those
+// cells while the displayed value is in cell.l.display (and/or cell.r).
+// Resolve the displayed value before type inference and insertion so the
+// SQLite mirror does not silently lose identifiers.
+function decodeXmlEntities(value) {
+  return String(value)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
+}
+
+function cellDisplayValue(cell) {
+  if (!cell) return null;
+  if (cell.v !== undefined && cell.v !== null && cell.v !== '') return cell.v;
+  if (cell.l && cell.l.display !== undefined && cell.l.display !== '') return cell.l.display;
+  if (cell.r) {
+    const richText = decodeXmlEntities(String(cell.r).replace(/<[^>]*>/g, '')).trim();
+    if (richText) return richText;
+  }
+  if (cell.w !== undefined && cell.w !== null && cell.w !== '') return cell.w;
+  return cell.v === undefined ? null : cell.v;
+}
+
 function inferType(values) {
   let hasInt = false, hasFloat = false, hasText = false, nonNullCount = 0;
   for (const v of values) {
@@ -97,7 +127,7 @@ function detectHeaderRow(sheet) {
     const cols = {};
     for (let c = 0; c <= range.e.c; c++) {
       const cell = sheet[xlsx.utils.encode_cell({ r, c })];
-      if (cell) cols[cell.v] = c;
+      if (cell) cols[cellDisplayValue(cell)] = c;
     }
     if (cols['品牌'] !== undefined && cols['商品标题'] !== undefined && cols['月销量'] !== undefined) {
       return r;
@@ -216,7 +246,7 @@ function processMonthlySheet(db, sheet, sheetName) {
   const rawHeaders = [];
   for (let c = 0; c <= range.e.c; c++) {
     const cell = sheet[xlsx.utils.encode_cell({ r: headerRow, c })];
-    rawHeaders.push(cell ? String(cell.v) : '');
+    rawHeaders.push(cell ? String(cellDisplayValue(cell) ?? '') : '');
   }
   let headers = rawHeaders.map(colNorm);
   headers = dedupCols(headers);
@@ -229,7 +259,7 @@ function processMonthlySheet(db, sheet, sheetName) {
     const row = [];
     for (let c = 0; c <= range.e.c; c++) {
       const cell = sheet[xlsx.utils.encode_cell({ r, c })];
-      row.push(cell ? cell.v : null);
+      row.push(cellDisplayValue(cell));
     }
     allRows.push(row);
   }
@@ -283,7 +313,7 @@ function processTopSheet(db, sheet, sheetName, topFormulaContext) {
   const rawHeaders = [];
   for (let c = 0; c <= range.e.c; c++) {
     const cell = sheet[xlsx.utils.encode_cell({ r: headerRow, c })];
-    rawHeaders.push(cell ? String(cell.v) : '');
+    rawHeaders.push(cell ? String(cellDisplayValue(cell) ?? '') : '');
   }
   let headers = rawHeaders.map(colNorm);
   headers = dedupCols(headers);
@@ -293,7 +323,7 @@ function processTopSheet(db, sheet, sheetName, topFormulaContext) {
     const row = [];
     for (let c = 0; c <= range.e.c; c++) {
       const cell = sheet[xlsx.utils.encode_cell({ r, c })];
-      row.push(cell ? cell.v : null);
+      row.push(cellDisplayValue(cell));
     }
     allRows.push(row);
   }

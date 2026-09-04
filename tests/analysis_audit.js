@@ -52,7 +52,8 @@ check('best-BSR enrichment covers 202601-202607', data.dataQuality.competitorDat
 check('historical BSR quality diagnostics cover all 43 pre-2026 months',
   data.dataQuality.historicalBsrTop100Quality.length === 43
   && data.dataQuality.historicalBsrTop100Quality.every((row) => row.month < '202601'
-    && row.identifierCoveragePct === 0 && row.strictListingPool === false));
+    && row.identifierCoveragePct === 100 && row.strictListingPool === false
+    && Number.isFinite(row.distinctListingKeys) && Number.isFinite(row.duplicateListingRows)));
 check('merged 2026 overall trend covers Jan-Jul in order', data.overallMarketTrend2026.length === 7
   && data.overallMarketTrend2026.map((row) => row.month).join(',') === '202601,202602,202603,202604,202605,202606,202607');
 check('BSR multi-value audit preserves source and parsed rank', Array.isArray(data.dataQuality.bsrMultiValueAudit)
@@ -352,7 +353,8 @@ check('forecast includes all four required 2026 Q4 ranges', ['104,000-125,000', 
 check('HTML includes three accessible static SVG trend charts', (html.match(/<figure class="chart-card">/g) || []).length === 3
   && (html.match(/<svg /g) || []).length === 3 && (html.match(/role="img"/g) || []).length === 3);
 check('HTML exposes 43-row historical BSR quality table', html.includes('2022-2025 BSR Top100逐月质量诊断')
-  && html.includes('源表行代理（无Listing标识）'));
+  && html.includes('含ASIN标识的行级/变体展开')
+  && data.dataQuality.historicalBsrTop100Quality.length === 43);
 check('HTML has exactly one coverage navigation entry', (html.match(/href="#coverage"/g) || []).length === 1);
 
 console.log('\n========== ANALYSIS AUDIT ==========');

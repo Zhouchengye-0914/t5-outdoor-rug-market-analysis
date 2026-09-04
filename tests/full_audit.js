@@ -58,6 +58,31 @@ function dedupColumns(columns) {
   });
 }
 
+function decodeXmlEntities(value) {
+  return String(value)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
+}
+
+function cellDisplayValue(cell) {
+  if (!cell) return null;
+  if (cell.v !== undefined && cell.v !== null && cell.v !== '') return cell.v;
+  if (cell.l && cell.l.display !== undefined && cell.l.display !== '') return cell.l.display;
+  if (cell.r) {
+    const richText = decodeXmlEntities(String(cell.r).replace(/<[^>]*>/g, '')).trim();
+    if (richText) return richText;
+  }
+  if (cell.w !== undefined && cell.w !== null && cell.w !== '') return cell.w;
+  return cell.v === undefined ? null : cell.v;
+}
+
 function detectHeaderRow(sheet, isTop) {
   if (isTop) return 0;
   const range = xlsx.utils.decode_range(sheet['!ref']);
@@ -65,7 +90,7 @@ function detectHeaderRow(sheet, isTop) {
     const values = [];
     for (let column = range.s.c; column <= range.e.c; column++) {
       const cell = sheet[xlsx.utils.encode_cell({ r: row, c: column })];
-      values.push(cell && cell.v);
+      values.push(cellDisplayValue(cell));
     }
     if (values.includes('品牌') && values.includes('商品标题') && values.includes('月销量')) return row;
   }
@@ -77,7 +102,7 @@ function expectedColumns(sheet, headerRow) {
   const raw = [];
   for (let column = range.s.c; column <= range.e.c; column++) {
     const cell = sheet[xlsx.utils.encode_cell({ r: headerRow, c: column })];
-    raw.push(colNorm(cell ? cell.v : ''));
+    raw.push(colNorm(cell ? cellDisplayValue(cell) : ''));
   }
   return dedupColumns(raw);
 }
@@ -197,7 +222,7 @@ for (const sheetName of workbook.SheetNames) {
           continue;
         }
         const cell = sheet[xlsx.utils.encode_cell({ r: row, c: column })];
-        const expected = cell ? cell.v : null;
+        const expected = cellDisplayValue(cell);
         const targetColumn = targetColumns[column - range.s.c];
         const actual = targetRows[rowIndex] ? targetRows[rowIndex][targetColumn] : undefined;
         cellsChecked++;

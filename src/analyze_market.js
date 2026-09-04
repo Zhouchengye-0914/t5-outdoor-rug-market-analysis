@@ -323,7 +323,7 @@ function buildAnnual(monthly) {
       timeComparable,
       scopeComparable,
       scopeNote: year === '2026'
-        ? '方向性参考：时间同周期，但2025为无ASIN的行级导出（含变体行），2026为父ASIN去重快照；统计单元不同，不构成严格同口径同比'
+        ? '方向性参考：时间同周期，但2025为含ASIN/父ASIN的行级变体导出，2026为父ASIN去重快照；统计单元不同，不构成严格同口径同比'
         : null,
     };
   });
@@ -371,7 +371,7 @@ function trendAnalysis(c, category, label) {
   if (baseline && baseline.month !== '202602') out.push(`- 2026核心截止月 ${fmtMonth(baseline.month)}：月度MOM/环比按跨年同月口径（${fmtMonth(baseline.month)} vs ${fmtMonth(baseline.momBasis)}）销量 ${fmtPct(baseline.momSales)}、销售额 ${fmtPct(baseline.momRevenue)}。`);
   if (peak2026) out.push(`- 2026.01-06核心月份中，${fmtMonth(peak2026.month)}销量最高，为 ${fmt(peak2026.sales)} 件；该峰值用于安排2027旺季前4-8周的补货、广告与新品测试。`);
   const scopeAnchor = c.monthly.find((row) => row.month === '202604');
-  if (scopeAnchor && baseline) out.push(`- 口径提示：2026.01-06为全市场父体级快照（每月1038-1993个父体），2025为无ASIN的行级导出（每月1683-2000行，含变体行）。两者量级接近不等于统计单元一致，跨年变化仅作方向性参考；2026.07为94父体小样本，只合并展示，不参与同比、环比和累计。`);
+  if (scopeAnchor && baseline) out.push(`- 口径提示：2026.01-06为全市场父体级快照（每月1038-1993个父体），2025为含ASIN/父ASIN的行级导出（每月1683-2000行，含变体行）。两者量级接近不等于统计单元一致，跨年变化仅作方向性参考；2026.07为94父体小样本，只合并展示，不参与同比、环比和累计。`);
   return out.join('\n');
 }
 
@@ -474,6 +474,10 @@ function rowsForCategory(month, category) {
 
 function bsrPoolQuality(month, rows, top100) {
   const identifiedRows = top100.filter((row) => String(row.parent || '').trim() || String(row.asin || '').trim()).length;
+  const listingKeys = top100.map((row) => listingKey(row)).filter((key) => !key.startsWith('row-'));
+  const distinctListingKeys = new Set(listingKeys).size;
+  const duplicateListingRows = Math.max(0, listingKeys.length - distinctListingKeys);
+  const historicalRowLevel = month < '202601';
   const distinctRanks = new Set(top100.map((row) => row.rank)).size;
   return {
     month,
@@ -481,12 +485,18 @@ function bsrPoolQuality(month, rows, top100) {
     selectedRows: top100.length,
     identifiedRows,
     identifierCoveragePct: top100.length ? identifiedRows / top100.length * 100 : null,
+    distinctListingKeys,
+    duplicateListingRows,
     distinctRanks,
     repeatedRankRows: Math.max(0, top100.length - distinctRanks),
     multiValueRows: top100.filter((row) => row.bsrMulti).length,
     multiValuePct: top100.length ? top100.filter((row) => row.bsrMulti).length / top100.length * 100 : null,
-    statisticalUnit: identifiedRows === top100.length ? '父体/ASIN Listing' : '源表行代理（无Listing标识）',
-    strictListingPool: top100.length > 0 && identifiedRows === top100.length,
+    statisticalUnit: !historicalRowLevel && identifiedRows === top100.length && duplicateListingRows === 0
+      ? '父体/ASIN独立Listing'
+      : identifiedRows === top100.length
+        ? '含ASIN标识的行级/变体展开'
+        : '源表行代理（无Listing标识）',
+    strictListingPool: !historicalRowLevel && top100.length > 0 && identifiedRows === top100.length && duplicateListingRows === 0,
   };
 }
 
@@ -682,7 +692,7 @@ const data = {
     ranking: '2026.01-07 category tiers use the best parsable 小类BSR among qualifying variants in the same parent family',
     top100Cap: 'each category/month is deterministically capped at 100 listings; all tier tables reuse that exact Top100 pool',
     bsrMultiValueAudit,
-    historicalBsrWarning: '2022-2025 exports do not contain listing identifiers; BSR Top100 is a deterministic row proxy, not 100 provably independent listings. Cross-year BSR changes are directional only.',
+    historicalBsrWarning: '2022-2025 exports contain ASIN/父ASIN as rich-text hyperlinks after display-value restoration; BSR Top100 remains a row-level/variant pool and is not necessarily 100 independent parent listings. Cross-year BSR changes are directional only.',
     historicalBsrTop100Quality: categories.overall.bsrTop100.quality.filter((row) => row.month < '202601'),
   },
   definitions: {
@@ -822,19 +832,23 @@ function mdAnnualSegments(rows) {
 }
 
 const labels = { overall: '整体市场', pp: 'PP塑料地垫（标题完整单词 plastic）', high: '非PP高客单产品', genimo: 'GENIMO品牌' };
+const overall202505Head = categories.overall.bsrGroups.monthly.find((row) => row.month === '202505' && row.segment === '头部（1-20）');
+const overall202505HeadEvidence = overall202505Head
+  ? `销量${fmt(overall202505Head.sales)}、销售额$${fmt(overall202505Head.revenue)}、加权均价$${fmt(overall202505Head.weightedPrice, 2)}`
+  : '该月无可用头部汇总';
 const md = ['# 户外地垫市场分析报告（优化版）', '',
   `> 分析范围：核心明细为 ${fmtMonth(analysisMonths[0])}-${fmtMonth(analysisMonths[analysisMonths.length - 1])}，共 ${analysisMonths.length} 个月；整体市场趋势将 2026.01-07 合并展示。2026.01-06 为全市场父体级快照（1038-1993父体/月），2026.07 为94父体小样本，只展示规模，不参与同比/环比和累计。`, '',
   '## 一、口径说明', '',
   '- 小类前100依据源字段 `小类BSR`。2026同父体优先取最小可解析名次；同名次优先销量/销售额字段完整行，再按源表顺序稳定决胜，代表行销量/销售额不重复相加。每分类每月Top100最多100条，所有分层复用同一Top100集合。',
-  '- 2022-2025源表没有ASIN/父ASIN，历史BSR Top100只能定义为“按BSR排序后截取的100条源表行代理”，不能证明是100个独立Listing；同一名次重复情况按月写入数据JSON质量诊断。2026为父体/ASIN Listing池，因此跨年BSR变化仅作方向性参考。',
+  '- 2022-2025源表的ASIN/父ASIN以富文本超链接保存，已恢复为显示值；历史BSR Top100仍是行级/变体池，存在同父体重复时不能直接证明是100个独立Listing；同一父体和同一名次重复情况按月写入数据JSON质量诊断。2026为父体/ASIN Listing池，因此跨年BSR变化仅作方向性参考。',
   '- PP：标题按不区分大小写的完整单词 `plastic`（单词边界）筛选，NULL按空字符串处理；不含 `plastics` 等扩展词。2026同父体任一变体命中即将该父体归入PP。',
   '- 高客单非PP：排除PP父体后的全部商品（SPEC 7.5，不再叠加材质关键词或价格门槛）。',
   '- 同时提供SKU平均标价和销量加权均价（销售额/销量）；SKU平均标价仅统计非空、可解析的价格，缺失值不按0计入。',
   '- 月度MOM/环比（用户口径）= 今年X月 vs 去年X月同月（如 2025.01 vs 2024.01）；本次交付不计算或展示本月 vs 上月的连续环比；年度YOY = 年度同周期对比。',
   '- 领导验收主基准：计划部参考 workbook「行业大盘数据」的 BI 全类目 Outdoor Rugs，独立按 `SUM(I4:I9)/SUM(H4:H9)-1` 计算 2026.01-06 相对 2025.01-06 销量方向；该表只有销量字段，不推导销售额或均价。BSR Top100 另按 Q=1..100 的 AX:BC 对 BJ:BO 原始月度输入独立求和。',
-  '- 2025.05（主表导出日 2025-06-19，该表无ASIN列）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部跨年同月 MOM/环比显示“无对应数据”；2026.05 头部 MOM 的基准为上述异常100行头部（销量162,797、销售额$6,446,797、加权均价$39.60），数值仅供参考，不可解读为真实头部同比。GENIMO 部分月份分层无在榜商品亦显示“无对应数据”（正常稀疏，非数据错误）。',
+  `- 2025.05（主表导出日 2025-06-19，ASIN/父ASIN为富文本超链接）源数据存在小类BSR同值重复：BSR=17 重复112行（JONATHAN Y SMB110多变体系列+Smiry）、BSR=23 重复125行、BSR=58 重复156行等（变体行共享父体名次），按小类BSR取前100后全部落入1-20 → 2025.05 中部21-50/尾部51-100为空。因此 2026.05 中部/尾部跨年同月 MOM/环比显示“无对应数据”；2026.05 头部 MOM 的基准为上述异常100行头部（${overall202505HeadEvidence}），数值仅供参考，不可解读为真实头部同比。GENIMO 部分月份分层无在榜商品亦显示“无对应数据”（正常稀疏，非数据错误）。`,
   '- BSR头部/中部/尾部分别为1-20、21-50、51-100；五档明细为1-5、6-10、11-20、21-50、51-100，区间不重叠。',
-  '- 年度数值使用同月份集合比较；2023对2022仅比较6-12月。2025是无ASIN的行级导出（含变体行），2026是父ASIN去重快照；即使月度量级接近，统计单元仍不同，所以2025→2026只标为方向性参考，不构成严格同比。', ''];
+  '- 年度数值使用同月份集合比较；2023对2022仅比较6-12月。2025是含ASIN/父ASIN的行级导出（含变体行），2026是父ASIN去重快照；即使月度量级接近，统计单元仍不同，所以2025→2026只标为方向性参考，不构成严格同比。', ''];
 md.push('### BSR多值解析审计', '',
   '> 下表保留进入各分类Top100集合且源小类BSR包含多个数值的Listing标记；采用可解析最小名次，源字符串保留用于复核。', '',
   mdBsrMultiValueAudit(data.dataQuality.bsrMultiValueAudit), '');
@@ -853,7 +867,7 @@ for (const category of ['overall', 'pp', 'high', 'genimo']) {
       leadBsr && leadBsr.available
         ? `- 同一 workbook 的 BSR Top100（${leadBsr.rankRange}）销量 ${fmt(leadBsr.currentSales)} vs ${fmt(leadBsr.baselineSales)}，按原始月度列独立重算为 **${fmtPct(leadBsr.growthPct)}**；不使用原表 P 列漏月/混月公式。`
         : '',
-      '> 以上是领导验收主基准；下方 market.db 全量快照仍保留实际导入结果。由于 2025 为无ASIN行级/含变体、2026 为父体去重快照，负向差异只能作为不可比明细参考，不能与上述 BI 基准混列。', '',
+      '> 以上是领导验收主基准；下方 market.db 全量快照仍保留实际导入结果。由于 2025 为含ASIN/父ASIN的行级/含变体口径、2026 为父体去重快照，负向差异只能作为不可比明细参考，不能与上述 BI 基准混列。', '',
       '### 2026.01-07整体市场趋势（合并展示）', '', mdOverallMarketTrend2026(overallMarketTrend2026), '',
       '> 2026.07只有94个父体，是小范围样本；已按领导反馈并入同一趋势表，但不与1-6月直接计算同比、环比或累计。', '',
       '### 2026数据替换审计记录', '', mdReplacementMetadata(replacementMetadata), '',
@@ -891,13 +905,13 @@ const ppSalesShare2025 = insight.ppSalesShare2026;
 
 // 六、父体进退 Cohort
 md.push('', '## 六、父体进退（Cohort）', '',
-  'BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月，仅2026含父ASIN数据）。',
+  'BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月；主源历史 ASIN 为富文本恢复值，2026 使用父体替换快照）。',
   '',
   `- **整体市场**：前100父体池从 ${categories.overall.cohort.fromParents} 变为 ${categories.overall.cohort.toParents}；留存 ${categories.overall.cohort.retained}、退出 ${categories.overall.cohort.exited}、新进入 ${categories.overall.cohort.entered}。层间迁移：${Object.entries(categories.overall.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
   `- **PP塑料**：前100父体池从 ${categories.pp.cohort.fromParents} 变为 ${categories.pp.cohort.toParents}；留存 ${categories.pp.cohort.retained}、退出 ${categories.pp.cohort.exited}、新进入 ${categories.pp.cohort.entered}。层间迁移：${Object.entries(categories.pp.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
   `- **高客单非PP**：前100父体池从 ${categories.high.cohort.fromParents} 变为 ${categories.high.cohort.toParents}；留存 ${categories.high.cohort.retained}、退出 ${categories.high.cohort.exited}、新进入 ${categories.high.cohort.entered}。层间迁移：${Object.entries(categories.high.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
   `- **GENIMO**：前100父体池从 ${categories.genimo.cohort.fromParents} 变为 ${categories.genimo.cohort.toParents}；留存 ${categories.genimo.cohort.retained}、退出 ${categories.genimo.cohort.exited}、新进入 ${categories.genimo.cohort.entered}。层间迁移：${Object.entries(categories.genimo.cohort.migration).map(([k, v]) => k + '=' + v).join('、')}。`,
-  '', '> 注：2025年全市场口径数据不含父ASIN（列值均为NULL），无法进行跨年父体进退比较。2025→2026跨年父体进退参见本报告第十一节“参考材料核对”。',
+  '', '> 注：2025年主源 ASIN/父ASIN已恢复，但其行级/变体口径与2026父体替换快照不同；跨年父体进退不作为严格同比结论。',
   '');
 
 // 七、GENIMO 2026累计Top父体
@@ -970,10 +984,10 @@ for (const fp of FORECAST_PARAMETERS) md.push(`| ${fp.parameter} | ${fp.defaultV
 // 十、参考材料核对 (SPEC 验收24)
 md.push('', '## 十、参考材料核对', '',
   '- 两份参考 workbook 由领导提供并确认通过（PP管数据、BSR年度分层与2027规划）；已核对工作表结构、筛选公式和BSR解析规则。',
-  '- PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年数据因源Excel不含ASIN列，无法进行父ASIN去重，故PP前100独立Listing数在2025年存在差异。',
+  '- PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年 ASIN/父ASIN 已从源表富文本超链接恢复，当前 PP 前100可按父体复核，但主源行级/变体口径与参考 workbook 的筛选边界仍需分别披露。',
   '- 2026.01-06 已更新为全市场父体级快照（1038-1993父体/月，替代原64-94父体口径），与领导参考 workbook 的2026年PP数据源不同，月度总量不可直接横向比较；2026.07 仍为94父体快照。',
   '- 计划部核对 workbook（实际路径：新增参考的材料和内容/销量预测计划部底表-户外地垫.xlsx）：行业大盘 BI 全类目 2026H1 同比独立重算为 +2.8106%；BSR Top100 按 Q=1..100、AX:BC 对 BJ:BO 独立重算为 +5.0910%。原表 P 列误用 BJ:BN+BP，且 M:P 未覆盖 Q=79..100，以上公式缺陷仅作核对记录，不替代当前市场 DB。',
-  '- 参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91。该核实使用参考 workbook 自身数据源（含父ASIN），市场DB 2025年无父ASIN，跨年父体进退仅对2026年首尾月有效。',
+  '- 参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91。该核实使用参考 workbook 自身数据源（含父ASIN）；市场DB 2025虽已恢复父ASIN，但源数据为行级/变体展开，跨年父体进退仅作方向性参考。',
   '- 参考 workbook GENIMO 2027规划已整合进本报告第八节建议；建议中的历史实绩基线统一使用2026.01-06数据，参考 workbook 只提供规划结构、门槛和预测假设。',
   '');
 
@@ -1064,9 +1078,9 @@ const renderedInsightHtml = leadershipIndustry && leadershipIndustry.available
   : insightHtml;
 
 const genimoProductsHtml = `<section id="genimo-products"><h2>七、GENIMO 2026.01-06累计Top父体</h2><p class="note">仅累计2026.01-06核心实绩；按父ASIN优先的独立Listing键聚合，用于识别2026主力父体。</p>${htmlTable(['排名', '父体/Listing', '代表ASIN', '累计销量', '累计销售额($)', '覆盖月数', '最新价($)', '商品标题'], data.genimoTopProducts.map((row, index) => [index + 1, row.parent || row.listingKey || '-', row.asin || '-', fmt(row.sales), fmt(row.revenue), row.months, fmt(row.latestPrice, 2), row.title || '-']))}</section>`;
-const cohortHtml = '<section id="cohort"><h2>六、父体进退（Cohort）</h2><p>BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月，仅2026含父ASIN数据）。</p>' + ['overall','pp','high','genimo'].map((key) => { const co = categories[key].cohort; if (!co) return ''; return '<p><b>' + labels[key] + '</b>：前100父体池从 ' + co.fromParents + ' 变为 ' + co.toParents + '；留存 ' + co.retained + '、退出 ' + co.exited + '、新进入 ' + co.entered + '。层间迁移：' + Object.entries(co.migration).map(([k, v]) => k + '=' + v).join('、') + '。</p>'; }).join('') + '<p class="note">2025年全市场口径数据不含父ASIN，无法跨年父体进退比较，跨年参考见第十节参考材料核对。</p></section>';
+const cohortHtml = '<section id="cohort"><h2>六、父体进退（Cohort）</h2><p>BSR前100按父ASIN（优先）或ASIN统计的留存、退出、新进入及头/中/尾迁移（SPEC 7.6/验收23）。比较周期：2026.01 vs 2026.06（核心分析首尾月；主源历史 ASIN 为富文本恢复值，2026 使用父体替换快照）。</p>' + ['overall','pp','high','genimo'].map((key) => { const co = categories[key].cohort; if (!co) return ''; return '<p><b>' + labels[key] + '</b>：前100父体池从 ' + co.fromParents + ' 变为 ' + co.toParents + '；留存 ' + co.retained + '、退出 ' + co.exited + '、新进入 ' + co.entered + '。层间迁移：' + Object.entries(co.migration).map(([k, v]) => k + '=' + v).join('、') + '。</p>'; }).join('') + '<p class="note">2025年主源 ASIN/父ASIN 已恢复，但其行级/变体口径与2026父体替换快照不同；跨年父体进退不作为严格同比结论。</p></section>';
 const forecastHtml = '<section id="forecast"><h2>九、2027规划与预测（预测/假设，非历史实绩）</h2><p class="note">以下数据来自领导提供并确认通过的参考 workbook 预测基准和程序综合研判，均标注为"预测/假设"，不作为历史实绩使用。</p><h3>2026年9—12月市场趋势预测</h3>' + htmlTable(['月份','销量基准预测','销量可能区间','销售额基准预测','市场阶段'], FORECAST_2026_Q4.map((fm) => [fmtMonth(fm.month), '约' + fmt(fm.sales), fm.range, '约' + fmt(fm.rev,0) + '美元', fm.stage])) + '<h3>2027年销量和销售额趋势预测</h3>' + htmlTable(['月份','2027年销量基准预测','销售额基准预测','趋势'], FORECAST_2027_MONTHLY.map((fm) => [fmtMonth(fm.month), fmt(fm.sales), '约' + fmt(fm.rev,0) + '美元', fm.note])) + '<h3>2027情景</h3>' + htmlTable(['情景','年销量','年销售额','触发条件'], FORECAST_2027_SCENARIOS.map((fs) => [fs.scenario, fs.sales, fs.rev, fs.trigger])) + '<h3>可调整参数</h3><p class="note">更新情景时只调整下列参数，不回写历史实绩。</p>' + htmlTable(['参数','默认值','调整方式'], FORECAST_PARAMETERS.map((fp) => [fp.parameter, fp.defaultValue, fp.effect])) + '</section>';
-const referenceHtml = '<section id="reference"><h2>十、参考材料核对</h2><ul><li>两份参考 workbook 由领导提供并确认通过（PP管数据、BSR年度分层与2027规划）；已核对工作表结构、筛选公式和BSR解析规则。</li><li>PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年数据因源Excel不含ASIN列，无法进行父ASIN去重，故PP前100独立Listing数在2025年存在差异。</li><li>2026.01-06为全市场父体级快照（1038-1993父体/月），2026.07为94父体小样本；领导参考 workbook 的2026年PP数据与当前市场DB数据源不同，月度总量不可直接横向比较。</li><li>参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91；该核实使用参考 workbook 自身数据源（含父ASIN）。</li><li>参考 workbook GENIMO 2027规划结构已整合进第八节；所有历史实绩与量化建议统一采用2026.01-06核心数据。</li></ul></section>';
+const referenceHtml = '<section id="reference"><h2>十、参考材料核对</h2><ul><li>两份参考 workbook 由领导提供并确认通过（PP管数据、BSR年度分层与2027规划）；已核对工作表结构、筛选公式和BSR解析规则。</li><li>PP workbook 采用独立Listing键（父ASIN优先）去重，2025.1-2026.7 含父ASIN；市场DB 2025年 ASIN/父ASIN 已从源表富文本超链接恢复，当前 PP 前100可按父体复核，但主源行级/变体口径与参考 workbook 的筛选边界仍需分别披露。</li><li>2026.01-06为全市场父体级快照（1038-1993父体/月），2026.07为94父体小样本；领导参考 workbook 的2026年PP数据与当前市场DB数据源不同，月度总量不可直接横向比较。</li><li>参考 workbook Cohort 进退层：2025 Top100 parents=160、2026 Top100 parents=144、Retained=53、Exited=107、Entered=91。该核实使用参考 workbook 自身数据源（含父ASIN）；市场DB 2025虽已恢复父ASIN，但源数据为行级/变体展开，跨年父体进退仅作方向性参考。</li><li>参考 workbook GENIMO 2027规划结构已整合进第八节；所有历史实绩与量化建议统一采用2026.01-06核心数据。</li></ul></section>';
 const planReferenceHtml = '<li>计划部核对 workbook（实际路径：新增参考的材料和内容/销量预测计划部底表-户外地垫.xlsx）：行业大盘 BI 全类目 2026H1 同比独立重算为 +2.8106%；BSR Top100 按 Q=1..100、AX:BC 对 BJ:BO 独立重算为 +5.0910%。原表 P 列误用 BJ:BN+BP，且 M:P 未覆盖 Q=79..100；以上公式缺陷仅作核对记录，不替代当前市场 DB。</li>';
 
 const coverageHtml = `<section id="coverage"><h2>十一、需求覆盖核对</h2>${htmlTable(['要求项', '交付位置', '状态'], [['整体市场销量/销售额/均价', '整体市场月度与年度表', '已覆盖'], ['2026.01-07整体市场趋势合并', '整体市场首张合并趋势表；2026.07跨口径指标标记不适用', '已覆盖'], ['整体月度MOM与环比', '所有月度表分别显示MOM/环比基准月份', '已覆盖'], ['小类前100同比/环比', '各分类 BSR Top100月度、年度表', '已覆盖'], ['BSR多值解析标记', '口径说明中的多值解析审计表及JSON', '已覆盖'], ['头部/中部/尾部及五档', '各分类 BSR分层月度、年度表', '已覆盖'], ['PP独立Listing明细', 'PP章节核心截止月明细；JSON保留2026.01-06全量', '已覆盖'], ['高客单非PP（排除PP后全部产品）', '高客单分类（排除PP后全部产品）', '已覆盖'], ['数据替换逐月可追溯', '整体市场的数据替换审计记录', '已覆盖'], ['趋势与GENIMO建议使用2026实绩', '第八节、GENIMO 2026累计Top父体与数据JSON', '已覆盖'], ['GENIMO工艺/包装验证', '第八节300-500单小批量验证规则', '已覆盖'], ['预测可调整参数', '第九节需求/价格/时间/情景参数', '已覆盖']])}</section>`;
@@ -1086,7 +1100,7 @@ const leadershipBenchmarkHtml = leadershipIndustry && leadershipIndustry.availab
 const chartMonths = categories.overall.monthly.filter((row) => row.month >= '202601' && row.month <= REPORT_CUTOFF);
 const trendChartsHtml = `<section id="visuals"><h2>2026核心趋势可视化</h2><p class="note">三张图均只使用2026.01-06父体级快照，适合观察同口径连续月趋势；跨年变化请以方向性参考口径解读。</p><div class="chart-grid">${svgLineChart('整体市场月销量', chartMonths, 'sales', '销量')}${svgLineChart('整体市场月销售额', chartMonths, 'revenue', '销售额')}${svgLineChart('GENIMO月销量', categories.genimo.monthly.filter((row) => row.month >= '202601' && row.month <= REPORT_CUTOFF), 'sales', '销量')}</div></section>`;
 const bsrQualityRows = data.dataQuality.historicalBsrTop100Quality;
-const bsrQualityHtml = `<details><summary><b>2022-2025 BSR Top100逐月质量诊断</b></summary><p class="note">历史源表没有Listing标识，以下“重复名次行”用于揭示行代理池可能把同一父体变体重复计入；该表是限制说明，不用于修正源数据。</p>${htmlTable(['月份','BSR 1-100候选行','截取行数','标识覆盖率','不同名次数','重复名次行','统计单元'], bsrQualityRows.map((row) => [fmtMonth(row.month), fmt(row.eligibleRows), fmt(row.selectedRows), fmt(row.identifierCoveragePct, 1) + '%', fmt(row.distinctRanks), fmt(row.repeatedRankRows), row.statisticalUnit]))}</details>`;
+const bsrQualityHtml = `<details><summary><b>2022-2025 BSR Top100逐月质量诊断</b></summary><p class="note">历史源表的 ASIN/父ASIN 已从富文本超链接恢复；以下“重复Listing行”和“重复名次行”分别揭示同一父体变体重复及同名次并列，不把行数直接当作独立Listing。2025.05异常100行头部口径基准为${overall202505HeadEvidence}。</p>${htmlTable(['月份','BSR 1-100候选行','截取行数','标识覆盖率','独立Listing数','重复Listing行','不同名次数','重复名次行','统计单元'], bsrQualityRows.map((row) => [fmtMonth(row.month), fmt(row.eligibleRows), fmt(row.selectedRows), fmt(row.identifierCoveragePct, 1) + '%', fmt(row.distinctListingKeys), fmt(row.duplicateListingRows), fmt(row.distinctRanks), fmt(row.repeatedRankRows), row.statisticalUnit]))}</details>`;
 const bsrMultiAuditHtml = `<details><summary><b>BSR多值解析审计</b>（${fmt(data.dataQuality.bsrMultiValueAudit.length)}条Top100入选记录）</summary><p class="note">源小类BSR含多个数值时采用可解析最小名次；保留源字符串和多值标记，便于逐条回溯。</p>${htmlTable(['类别','月份','Listing键','父ASIN','ASIN','采用名次','源小类BSR','多值标记'], data.dataQuality.bsrMultiValueAudit.map((row) => [row.category, fmtMonth(row.month), row.listingKey || '-', row.parent || '-', row.asin || '-', fmt(row.rank), row.sourceBsr || '-', '是']))}</details>`;
 const quickMd = [
   '# 户外地垫市场分析报告（极速版）', '',
@@ -1100,7 +1114,7 @@ const quickMd = [
   `- 2026.06整体销量 ${fmt(categories.overall.monthly.find((row) => row.month === '202606').sales)}，为核心期峰值；该峰值用于安排2027旺季前4-8周的补货、广告与新品测试。`,
   '- 2026.07仅94父体，是小范围样本；已合并展示，但不参与同比、环比、累计或核心结论。', '',
   '## 必须同时阅读的限制', '',
-  '- 2025为无ASIN的行级导出（含变体行），2026为父ASIN去重快照；跨年百分比只表示方向，不是严格同口径同比。',
+  '- 2025为含ASIN/父ASIN的行级导出（含变体行），2026为父ASIN去重快照；跨年百分比只表示方向，不是严格同口径同比。',
   '- 2022-2025 BSR Top100是源表行代理，不等于100个可验证的独立Listing；2025.05存在严重重复名次异常。',
   '- 2026代表行规则：同父体先取最小可解析小类BSR；同名次优先销量/销售额字段完整行，再按源表顺序稳定决胜；不合计子体。',
   '- SKU平均标价排除空值和不可解析值；销量加权成交均价=销售额/销量。', '',
@@ -1129,6 +1143,9 @@ let htmlOutput = html
   // insightHtml 是历史长模板，最终渲染前再做一次口径清理，确保连续环比不进入交付 HTML。
   .replace('；2026月度环比保持父体口径一致。', '；月度MOM/环比统一采用跨年同月基准。')
   .replace('月度MOM = 今年X月 vs 去年X月（跨年同月，如 2025.01 vs 2024.01）；月度环比 = 本月 vs 上月（连续月环比）。', '月度MOM/环比（用户口径）= 今年X月 vs 去年X月同月；本次不计算或展示本月 vs 上月的连续环比。')
+  .replace('2022-2025源表没有ASIN/父ASIN', '2022-2025源表的ASIN/父ASIN以富文本超链接保存，已恢复为显示值')
+  .replace('2025是无ASIN的行级导出', '2025是含ASIN/父ASIN的行级导出')
+  .replace('2025.05（主表导出日 2025-06-19，无ASIN列）', '2025.05（主表导出日 2025-06-19，ASIN/父ASIN为富文本超链接）')
   .replace(/、环比 -，为核心期峰值；/g, '、为核心期峰值；')
   .replace(/，环比 -，为核心期峰值；/g, '，为核心期峰值；')
   .replace(/，月度环比 - \/ -；/g, '；')
